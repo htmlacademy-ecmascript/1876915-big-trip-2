@@ -1,7 +1,7 @@
 # Проект «Большое путешествие»
 
 * Студент: [Сергей Софронов](https://htmlacademy.ru/profile/id1876915).
-* Наставник: [Сергей Андреев](https://t.me/aandreevsm).
+* Наставник: [Сергей Андреев](https://htmlacademy.ru/profile/id812127).
 * Проект: ["Проект «Большое путешествие»"](https://sergeysofronov.github.io/1876915-big-trip-2/).
 ---
 
