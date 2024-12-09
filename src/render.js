@@ -1,19 +1,19 @@
-const RenderPosition = {
+import AbstractView from './view/abstract-view.js';
+
+export const RenderPosition = {
   BEFOREBEGIN: 'beforebegin',
   AFTERBEGIN: 'afterbegin',
   BEFOREEND: 'beforeend',
   AFTEREND: 'afterend',
 };
 
-function createElement(template) {
-  const newElement = document.createElement('div');
-  newElement.innerHTML = template;
+export function render(container, component, place = RenderPosition.BEFOREEND) {
 
-  return newElement.firstElementChild;
+  container = container instanceof AbstractView ? container.element : container;
+  component = component instanceof AbstractView ? component.element : component;
+
+  if (!((container instanceof Element) && (component instanceof Element))) {
+    throw new Error('Container or component aren\'t instance of Element');
+  }
+  container.insertAdjacentElement(place, component);
 }
-
-function render(component, container, place = RenderPosition.BEFOREEND) {
-  container.insertAdjacentElement(place, component.getElement());
-}
-
-export {RenderPosition, createElement, render};
