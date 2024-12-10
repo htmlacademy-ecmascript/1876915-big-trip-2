@@ -179,7 +179,7 @@ const getComponentTemplate = () => (`
   </li>`
 );
 
-export default class FormViewCreate extends AbstractView {
+export default class RouteCreateView extends AbstractView {
   get template() {
     return getComponentTemplate();
   }

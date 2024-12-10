@@ -186,7 +186,7 @@ const getComponentTemplate = () => (`
   </li>`
 );
 
-export default class FormViewEdit extends AbstractView {
+export default class RouteEditView extends AbstractView {
   get template() {
     return getComponentTemplate();
   }

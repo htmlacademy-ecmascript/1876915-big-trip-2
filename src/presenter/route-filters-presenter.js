@@ -1,7 +1,7 @@
 import { render } from '../render';
 import FiltersView from '../view/filters-view';
 
-export default class FiltersPresenter {
+export default class RouteFiltersPresenter {
   #filtersContainer = null;
   #filtersComponent = null;
 
