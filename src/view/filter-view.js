@@ -1,6 +1,6 @@
 import AbstractView from './abstract-view';
 
-const getComponentTemplate = () => (`
+const createFiltersTemplate = () => (`
   <form class="trip-filters" action="#" method="get">
     <div class="trip-filters__filter">
       <input id="filter-everything" class="trip-filters__filter-input  visually-hidden" type="radio" name="trip-filter" value="everything" checked disabled>
@@ -26,8 +26,8 @@ const getComponentTemplate = () => (`
   </form>`
 );
 
-export default class FiltersView extends AbstractView {
+export default class FilterView extends AbstractView {
   get template() {
-    return getComponentTemplate();
+    return createFiltersTemplate();
   }
 }
