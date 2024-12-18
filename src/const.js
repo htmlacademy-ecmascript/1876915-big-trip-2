@@ -3,21 +3,30 @@ export const EventStates = {
   EVENT_DEFAULT: false,
 };
 
-export const RoutePointType = {
-  TAXI: 'Taxi',
-  BUS: 'Bus',
-  TRAIN: 'Train',
-  SHIP: 'Ship',
-  DRIVE: 'Drive',
-  FLIGHT: 'Flight',
-  CHECK_IN: 'Check-in',
-  SIGHTSEEING: 'Sightseeing',
-  RESTAURANT: 'Restaurant',
+export const FormMode = {
+  CREATE: 'CREATE',
+  EDIT: 'EDIT',
 };
 
-export const RouteFilterType = {
+export const DateFormat = {
+  EVENT_DEFAULT: 'YYYY-MM-DD',
+  EVENT_HUMAN: 'MMM DD',
+  EVENT_START: 'YYYY-MM-DDTHH:mm',
+  EVENT_TIME: 'HH:mm',
+  FORM_START: 'YY/MM/DD HH:mm'
+};
+
+export const FilterType = {
   EVERYTHING: 'Everything',
   FUTURE: 'Future',
   PRESENT: 'Present',
   PAST: 'Past',
+};
+
+export const TripDefault = {
+  PRICE: 0,
+  TYPE: 'flight',
+  DESTINATION: null,
+  IS_FAVORITE: false,
+  OFFERS: [],
 };

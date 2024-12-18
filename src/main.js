@@ -1,18 +1,16 @@
-import RouteFiltersPresenter from './presenter/route-filters-presenter';
-import RouteDeskPresenter from './presenter/route-desk-presenter';
-import TripSummaryPresenter from './presenter/trip-summary-presenter';
+import TripModel from './model/trip-model';
+import BoardPresenter from './presenter/board-presenter';
+import HeaderPresenter from './presenter/header-presenter';
 
-const tripSummaryContainer = document.querySelector('.trip-main');
-const filtersContainer = tripSummaryContainer.querySelector('.trip-controls__filters');
+const tripInfoContainer = document.querySelector('.trip-main');
+const filtersContainer = tripInfoContainer.querySelector('.trip-controls__filters');
 const contentContainer = document.querySelector('.trip-events');
 
+const model = new TripModel();
+model.init();
 
-const tripSummary = new TripSummaryPresenter(tripSummaryContainer);
-tripSummary.init();
+const header = new HeaderPresenter(tripInfoContainer, filtersContainer, model);
+header.init();
 
-const routeFilters = new RouteFiltersPresenter(filtersContainer);
-routeFilters.init();
-
-const routeDesk = new RouteDeskPresenter(contentContainer);
-routeDesk.init();
-
+const board = new BoardPresenter(contentContainer, model);
+board.init();
