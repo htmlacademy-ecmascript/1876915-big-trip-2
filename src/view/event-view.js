@@ -14,6 +14,7 @@ const createOfferListTemplate = (offers) => (
 
 const createEventTemplate = (event) => {
   const {
+    id,
     basePrice,
     destination: { name },
     dateFrom,
@@ -36,45 +37,44 @@ const createEventTemplate = (event) => {
   const eventClass = isFavorite ? 'event__favorite-btn--active' : '';
 
   return (`
-      <li class="trip-events__item">
-        <div class="event">
-          <time class="event__date" datetime="${date}">${dateHuman}</time>
-          <div class="event__type">
-            <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
-          </div>
-          <h3 class="event__title">${eventTitle}</h3>
-          <div class="event__schedule">
-            <p class="event__time">
-              <time class="event__start-time" datetime="${dateStart}">${timeStart}</time>
-              &mdash;
-              <time class="event__end-time" datetime="${dateEnd}">${timeEnd}</time>
-            </p>
-            <p class="event__duration">${duration}</p>
-          </div>
-          <p class="event__price">
-            &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
-          </p>
-          ${offers.length ? `
-            <h4 class="visually-hidden">Offers:</h4>
-            <ul class="event__selected-offers">
-              ${createOfferListTemplate(offers)}
-            </ul>` : ''}
-          <button class="event__favorite-btn ${eventClass}" type="button">
-            <span class="visually-hidden">Add to favorite</span>
-            <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
-              <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z" />
-            </svg>
-          </button>
-          <button class="event__rollup-btn" type="button">
-            <span class="visually-hidden">Open event</span>
-          </button>
-        </div>
-      </li>`
+    <div class="event" data-event-id = ${id}>
+      <time class="event__date" datetime="${date}">${dateHuman}</time>
+      <div class="event__type">
+        <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
+      </div>
+      <h3 class="event__title">${eventTitle}</h3>
+      <div class="event__schedule">
+        <p class="event__time">
+          <time class="event__start-time" datetime="${dateStart}">${timeStart}</time>
+          &mdash;
+          <time class="event__end-time" datetime="${dateEnd}">${timeEnd}</time>
+        </p>
+        <p class="event__duration">${duration}</p>
+      </div>
+      <p class="event__price">
+        &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
+      </p>
+      ${(offers.length > 0) ? `
+        <h4 class="visually-hidden">Offers:</h4>
+        <ul class="event__selected-offers">
+          ${createOfferListTemplate(offers)}
+        </ul>` : ''}
+      <button class="event__favorite-btn ${eventClass}" type="button">
+        <span class="visually-hidden">Add to favorite</span>
+        <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
+          <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z" />
+        </svg>
+      </button>
+      <button class="event__rollup-btn" type="button">
+        <span class="visually-hidden">Open event</span>
+      </button>
+    </div>`
   );
 };
 
 export default class EventView extends AbstractView {
   #event = null;
+  #onRemoveCallback = null;
 
   constructor(event) {
     super();
@@ -84,4 +84,13 @@ export default class EventView extends AbstractView {
   get template() {
     return createEventTemplate(this.#event);
   }
+
+  setOnRemoveHandler = (callback) => {
+    this.#onRemoveCallback = callback;
+  };
+
+  removeElement = () => {
+    this.#onRemoveCallback();
+    super.removeElement();
+  };
 }

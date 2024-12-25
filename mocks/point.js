@@ -1,4 +1,4 @@
-export const POINTS = [
+const points = [
   {
     id: '8220b3c4-7c8b-43b9-a36c-87860c29a201',
     basePrice: 7863,
@@ -318,3 +318,5 @@ export const POINTS = [
     type: 'check-in'
   }
 ];
+
+export const getPointMocks = () => points;

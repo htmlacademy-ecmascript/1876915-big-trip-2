@@ -17,3 +17,18 @@ export function render(container, component, place = RenderPosition.BEFOREEND) {
   }
   container.insertAdjacentElement(place, component);
 }
+
+export const replace = (oldComponent, newComponent) => {
+  if (!(oldComponent && newComponent)) {
+    throw new Error('Can\'t replace non-existing elements');
+  }
+
+  const oldInstance = oldComponent instanceof AbstractView ? oldComponent.element : oldComponent;
+  const newInstance = newComponent instanceof AbstractView ? newComponent.element : newComponent;
+
+  if (!((oldInstance instanceof Element) && (newInstance instanceof Element))) {
+    throw new Error('Can\'t replace non-Element instance');
+  }
+
+  oldInstance.replaceWith(newInstance);
+};

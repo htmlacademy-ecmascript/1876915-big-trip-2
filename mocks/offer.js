@@ -1,4 +1,4 @@
-export const OFFERS = [
+const offers = [
   {
     type: 'taxi',
     offers: [
@@ -204,3 +204,5 @@ export const OFFERS = [
     ]
   }
 ];
+
+export const getOfferMocks = () => offers;
