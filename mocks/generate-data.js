@@ -1,9 +1,9 @@
 import { mix } from '../src/utils';
-import { DESTINATIONS } from './destination';
-import { OFFERS } from './offer';
-import { POINTS } from './point';
+import { getDestinationMocks } from './destination';
+import { getOfferMocks } from './offer';
+import { getPointMocks } from './point';
 
 const EVENT_QUANTITY = 5;
 
-export const generateTripData = (quantity = EVENT_QUANTITY) => [mix(POINTS, quantity), OFFERS, DESTINATIONS];
+export const generateTripData = (quantity = EVENT_QUANTITY) => [mix(getPointMocks(), quantity), getOfferMocks(), getDestinationMocks()];
 

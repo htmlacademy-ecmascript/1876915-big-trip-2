@@ -12,5 +12,5 @@ model.init();
 const header = new HeaderPresenter(tripInfoContainer, filtersContainer, model);
 header.init();
 
-const board = new BoardPresenter(contentContainer, model);
+const board = new BoardPresenter(contentContainer, tripInfoContainer, model);
 board.init();

@@ -1,4 +1,4 @@
-export const DESTINATIONS = [
+const destinations = [
   {
     id: 'c7fcf894-e8ef-4347-94cf-8c76aa6c6833',
     description: 'Chamonix - a perfect place to stay with a family',
@@ -105,4 +105,6 @@ export const DESTINATIONS = [
     ]
   }
 ];
+
+export const getDestinationMocks = () => destinations;
 

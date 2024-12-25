@@ -1,5 +1,3 @@
-import { EventStates } from '../const';
-
 export default class AbstractView {
   #element = null;
   #eventList = new Map(); // {key:element, value: [[eventType, eventHandler], ...]
@@ -47,8 +45,7 @@ export default class AbstractView {
     return null;
   };
 
-
-  destroyElement = () => {
+  removeElement() {
     if (!this.#element) {
       return;
     }
@@ -56,9 +53,11 @@ export default class AbstractView {
     this.removeEventListeners();
     this.#element.remove();
     this.#element = null;
-  };
+  }
 
-  createEventListener = (selector, eventType, callback, isPreventDefault = EventStates.PREVENT_DEFAULT) => {
+  createEventListener = (selector, eventType, callback, options) => {
+
+    const { isPreventDefault = false, isStopPropagation = false, eventOptions } = Object.assign({}, options);
 
     if (typeof (callback) !== 'function') {
       throw new Error('Argument "callback" is not a function');
@@ -69,6 +68,11 @@ export default class AbstractView {
       if (isPreventDefault) {
         evt.preventDefault();
       }
+
+      if (isStopPropagation) {
+        evt.stopPropagation();
+      }
+
       callback(evt);
     };
 
@@ -78,7 +82,7 @@ export default class AbstractView {
     if (!isHandlerExist) {
       elementHandlers.push([eventType, callback]);
       this.#eventList.set(element, elementHandlers);
-      element.addEventListener(eventType, eventHandler);
+      element.addEventListener(eventType, eventHandler, eventOptions);
     }
   };
 
