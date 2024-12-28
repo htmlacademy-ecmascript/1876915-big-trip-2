@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import AbstractView from './abstract-view';
 import { DateFormat } from '../const';
-import { getDuration } from '../utils';
+import { getDuration } from '../utils/event';
 
 const createOfferListTemplate = (offers) => (
   `${offers.map(({ title, price }) => (`

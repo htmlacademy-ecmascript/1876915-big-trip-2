@@ -1,11 +1,14 @@
+import { createFilters } from '../utils/filter';
+import { createSortItems } from '../utils/sort';
 import { generateTripData } from '../../mocks/generate-data';
-import { tripDefault } from '../const';
+import { FilterType, tripDefault } from '../const';
 
 export default class TripModel {
   #events = [];
   #rawEvents = [];
   #destinations = [];
   #offers = [];
+  #filterType = FilterType.EVERYTHING;
 
   get events() {
     return this.#events;
@@ -15,19 +18,20 @@ export default class TripModel {
     return this.#destinations;
   }
 
-  get offerTypes() {
-    return this.#offers.map(({ type }) => type);
+  get filters() {
+    return createFilters(this.#events);
   }
 
-  get tripInfo() {
-    const events = this.#events.toSorted((a, b) => new Date(a.dateFrom) - new Date(b.dateFrom));
+  get sortItems() {
+    return createSortItems(this.#events);
+  }
 
-    return {
-      start: events[0],
-      end: events[events.length - 1],
-      middle: events[1],
-      price: events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0),
-    };
+  get filterType() {
+    return this.#filterType;
+  }
+
+  get offerTypes() {
+    return this.#offers.map(({ type }) => type);
   }
 
   getDefaultEvent = () => {

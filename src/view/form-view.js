@@ -1,9 +1,8 @@
 import dayjs from 'dayjs';
 import AbstractView from './abstract-view';
-import { DateFormat, FormMode } from '../const';
+import { ButtonText, DateFormat, FormMode } from '../const';
 import { nanoid } from 'nanoid';
-import { toUpperCaseFirstLetter } from '../utils';
-
+import { capitalizeFirstLetter } from '../utils/event';
 
 const createEventTypeItemTemplate = (eventType, offerTypes = []) => offerTypes.map((type) => {
   const id = nanoid();
@@ -11,7 +10,7 @@ const createEventTypeItemTemplate = (eventType, offerTypes = []) => offerTypes.m
   return (`
     <div class="event__type-item">
       <input id="event-type-taxi-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${checkStatus}>
-        <label class="event__type-label  event__type-label--${type}" for="event-type-taxi-${id}">${toUpperCaseFirstLetter(type)}</label>
+        <label class="event__type-label  event__type-label--${type}" for="event-type-taxi-${id}">${capitalizeFirstLetter(type)}</label>
     </div>`
   );
 }).join('');
@@ -111,7 +110,8 @@ const createFormTemplate = (event, destinations, offerTypes, mode) => {
     type,
   } = event || {};
 
-  const exitButtonText = mode === FormMode.EDIT ? 'Delete' : 'Cancel';
+  const exitButtonText = mode === FormMode.EDIT ? ButtonText.DELETE : ButtonText.CANCEL;
+  const submitButtonText = ButtonText.SAVE;
   const eventTypeListTemplate = createEventTypeListTemplate(type, offerTypes);
   const destinationListTemplate = createDestinationListTemplate({ type, destination }, destinations);
   const offerDetailsListTemplate = (offers.length > 0) ? createOfferListTemplate(offers) : '';
@@ -140,7 +140,7 @@ const createFormTemplate = (event, destinations, offerTypes, mode) => {
         ${eventTimeTemplate}
         ${eventPriceTemplate}
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
+        <button class="event__save-btn  btn  btn--blue" type="submit">${submitButtonText}</button>
         <button class="event__reset-btn" type="reset">${exitButtonText}</button>
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Close event</span>

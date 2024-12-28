@@ -1,23 +1,45 @@
 import dayjs from 'dayjs';
-import { DateFormat } from '../const';
 import AbstractView from './abstract-view';
+import { DateFormat } from '../const';
 
-const createTripInfoTemplate = ({ start, middle, end, price }) => {
+const createTripInfoTemplate = (events) => {
 
-  const destinationStart = start?.destination.name;
-  const destinationEnd = end?.destination.name;
-  const destinationMiddle = middle ? middle?.destination.name : '...';
-  const dateStart = dayjs(start?.dateFrom).format(DateFormat.INFO_HUMAN);
-  const dateEnd = dayjs(end?.dateFrom).format(DateFormat.INFO_HUMAN);
+  if (events.length === 0) {
+    return '';
+  }
 
-  //!!! Исправить показ месяца начала, если совпадает с месяцем конца маршрута
+  let title = `${events[0].destination.name}`;
+  let count = 0;
+
+  for (let i = 1; i < events.length; i++, count++) {
+    if (events[i]) {
+      title += ` &mdash; ${events[i].destination.name}`;
+
+      if (count > 1) {
+        title = title.replace(/;.+;/ig, '; ... &mdash;');
+        break;
+      }
+    }
+  }
+
+  const firstEventMonth = new Date(events[0].dateFrom).getMonth();
+  const lastEventMonth = new Date(events[count].dateFrom).getMonth();
+  const format = ((events.length > 1) && (firstEventMonth === lastEventMonth)) ? DateFormat.INFO_SHORT_HUMAN : DateFormat.INFO_HUMAN;
+
+  let date = `${dayjs(events[0].dateFrom).format(format)}`;
+
+  if (count > 0) {
+    date += `&nbsp;&mdash;&nbsp;${dayjs(events[count].dateFrom).format(DateFormat.INFO_HUMAN)}`;
+  }
+
+  const price = events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0);
 
   return (`
     <section class="trip-main__trip-info  trip-info">
       <div class="trip-info__main">
-        <h1 class="trip-info__title">${destinationStart} &mdash; ${destinationMiddle} &mdash; ${destinationEnd}</h1>
+        <h1 class="trip-info__title">${title}</h1>
 
-        <p class="trip-info__dates">${dateStart}&nbsp;&mdash;&nbsp;${dateEnd}</p>
+        <p class="trip-info__dates">${date}</p>
       </div>
 
       <p class="trip-info__cost">
@@ -28,15 +50,15 @@ const createTripInfoTemplate = ({ start, middle, end, price }) => {
 };
 
 export default class TripInfoView extends AbstractView {
-  #tripInfo = null;
+  #events = null;
 
-  constructor(tripInfo) {
+  constructor(events) {
     super();
-    this.#tripInfo = tripInfo;
+    this.#events = events;
   }
 
   get template() {
-    return createTripInfoTemplate(this.#tripInfo);
+    return createTripInfoTemplate(this.#events);
   }
 }
 
