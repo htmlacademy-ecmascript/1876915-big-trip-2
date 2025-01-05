@@ -61,3 +61,8 @@ export const ButtonText = {
   DELETE: 'Delete',
   DELETING: 'Deleting...',
 };
+
+export const TripTitleQuantity = {
+  MIN: 1,
+  MAX: 3,
+};

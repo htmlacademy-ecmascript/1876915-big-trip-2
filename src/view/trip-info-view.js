@@ -1,37 +1,40 @@
 import dayjs from 'dayjs';
 import AbstractView from './abstract-view';
-import { DateFormat } from '../const';
+import { DateFormat, TripTitleQuantity } from '../const';
 
-const createTripInfoTemplate = (events) => {
-
-  if (events.length === 0) {
-    return '';
+const createTripTittle = (events, lastEvent, length) => {
+  if (length > TripTitleQuantity.MAX) {
+    return `${events[0].destination.name} &mdash; ... &mdash; ${lastEvent.destination.name}`;
   }
 
-  let title = `${events[0].destination.name}`;
-  let count = 0;
+  return events.map(({ destination: { name } }) => name).join(' &mdash; ');
+};
 
-  for (let i = 1; i < events.length; i++, count++) {
-    if (events[i]) {
-      title += ` &mdash; ${events[i].destination.name}`;
-
-      if (count > 1) {
-        title = title.replace(/;.+;/ig, '; ... &mdash;');
-        break;
-      }
-    }
-  }
-
+const createTripDate = (events, lastEvent, length) => {
   const firstEventMonth = new Date(events[0].dateFrom).getMonth();
-  const lastEventMonth = new Date(events[count].dateFrom).getMonth();
-  const format = ((events.length > 1) && (firstEventMonth === lastEventMonth)) ? DateFormat.INFO_SHORT_HUMAN : DateFormat.INFO_HUMAN;
+  const lastEventMonth = new Date(lastEvent.dateFrom).getMonth();
+  const format = ((length > TripTitleQuantity.MIN) && (firstEventMonth === lastEventMonth)) ? DateFormat.INFO_SHORT_HUMAN : DateFormat.INFO_HUMAN;
 
   let date = `${dayjs(events[0].dateFrom).format(format)}`;
 
-  if (count > 0) {
-    date += `&nbsp;&mdash;&nbsp;${dayjs(events[count].dateFrom).format(DateFormat.INFO_HUMAN)}`;
+  if (length > TripTitleQuantity.MIN) {
+    date += `&nbsp;&mdash;&nbsp;${dayjs(lastEvent.dateFrom).format(DateFormat.INFO_HUMAN)}`;
   }
 
+  return date;
+};
+
+const createTripInfoTemplate = (events) => {
+  const length = events.length;
+
+  if (length === 0) {
+    return '';
+  }
+
+  const lastEvent = events[length - 1];
+
+  const title = createTripTittle(events, lastEvent, length);
+  const date = createTripDate(events, lastEvent, length);
   const price = events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0);
 
   return (`
