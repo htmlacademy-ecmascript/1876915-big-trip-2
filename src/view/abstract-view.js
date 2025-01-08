@@ -57,7 +57,7 @@ export default class AbstractView {
 
   createEventListener = (selector, eventType, callback, options) => {
 
-    const { isPreventDefault = false, isStopPropagation = false, eventOptions } = Object.assign({}, options);
+    const { isPreventDefault = false, isStopPropagation = false, eventOptions } = options || {};
 
     if (typeof (callback) !== 'function') {
       throw new Error('Argument "callback" is not a function');

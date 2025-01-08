@@ -4,7 +4,8 @@ export const DateFormat = {
   EVENT_START: 'YYYY-MM-DDTHH:mm',
   EVENT_TIME: 'HH:mm',
   FORM_START: 'YY/MM/DD HH:mm',
-  INFO_HUMAN: 'DD MMM'
+  INFO_HUMAN: 'DD MMM',
+  INFO_SHORT_HUMAN: 'DD',
 };
 
 export const FilterType = {
@@ -50,4 +51,18 @@ export const tripDefault = {
 export const ElementSelectors = {
   ROLL_UP_BUTTON: '.event__rollup-btn',
   EVENT_ITEM: '.event',
+};
+
+export const ButtonText = {
+  CANCEL: 'Cancel',
+  CREATE: 'New Event',
+  SAVE: 'Save',
+  SAVING: 'Saving...',
+  DELETE: 'Delete',
+  DELETING: 'Deleting...',
+};
+
+export const TripTitleQuantity = {
+  MIN: 1,
+  MAX: 3,
 };
