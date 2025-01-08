@@ -4,7 +4,13 @@ export const DateFormat = {
   EVENT_START: 'YYYY-MM-DDTHH:mm',
   EVENT_TIME: 'HH:mm',
   FORM_START: 'YY/MM/DD HH:mm',
-  INFO_HUMAN: 'DD MMM'
+  INFO_HUMAN: 'DD MMM',
+  INFO_SHORT_HUMAN: 'DD',
+};
+
+export const EventMode = {
+  DEFAULT: false,
+  EDIT: true,
 };
 
 export const FilterType = {
@@ -29,7 +35,7 @@ export const SortType = {
   OFFER: 'offers',
 };
 
-export const FormMode = {
+export const FormType = {
   CREATE: 'CREATE',
   EDIT: 'EDIT',
 };
@@ -49,5 +55,19 @@ export const tripDefault = {
 
 export const ElementSelectors = {
   ROLL_UP_BUTTON: '.event__rollup-btn',
-  EVENT_ITEM: '.event',
+  EVENT_ITEM: '.trip-events__item',
+};
+
+export const ButtonText = {
+  CANCEL: 'Cancel',
+  CREATE: 'New Event',
+  SAVE: 'Save',
+  SAVING: 'Saving...',
+  DELETE: 'Delete',
+  DELETING: 'Deleting...',
+};
+
+export const TripTitleQuantity = {
+  MIN: 1,
+  MAX: 3,
 };
