@@ -17,47 +17,48 @@ function createElement(template) {
   const newElement = document.createElement('div');
   newElement.innerHTML = template;
 
-  return newElement.firstElementChild;
+  if (newElement.firstElementChild === newElement.lastElementChild) {
+    return newElement.firstElementChild;
+  }
+
+  throw new Error('Can\'t create component from several sibling elements');
 }
 
 /**
  * Функция для отрисовки элемента
- * @param {AbstractView} component Компонент, который должен был отрисован
  * @param {HTMLElement} container Элемент в котором будет отрисован компонент
+ * @param {AbstractView} component Компонент, который должен был отрисован
  * @param {string} place Позиция компонента относительно контейнера. По умолчанию - `beforeend`
  */
-function render(component, container, place = RenderPosition.BEFOREEND) {
-  if (!(component instanceof AbstractView)) {
-    throw new Error('Can render only components');
-  }
+function render(container, component, place = RenderPosition.BEFOREEND) {
 
-  if (container === null) {
-    throw new Error('Container element doesn\'t exist');
-  }
+  container = container instanceof AbstractView ? container.element : container;
+  component = component instanceof AbstractView ? component.element : component;
 
-  container.insertAdjacentElement(place, component.element);
+  if (!((container instanceof Element) && (component instanceof Element))) {
+    throw new Error('Container or component aren\'t instance of Element');
+  }
+  container.insertAdjacentElement(place, component);
 }
 
 /**
  * Функция для замены одного компонента на другой
- * @param {AbstractView} newComponent Компонент, который нужно показать
  * @param {AbstractView} oldComponent Компонент, который нужно скрыть
+ * @param {AbstractView} newComponent Компонент, который нужно показать
  */
-function replace(newComponent, oldComponent) {
-  if (!(newComponent instanceof AbstractView && oldComponent instanceof AbstractView)) {
-    throw new Error('Can replace only components');
+function replace(oldComponent, newComponent) {
+  if (!(oldComponent && newComponent)) {
+    throw new Error('Can\'t replace non-existing elements');
   }
 
-  const newElement = newComponent.element;
-  const oldElement = oldComponent.element;
+  const oldInstance = oldComponent instanceof AbstractView ? oldComponent.element : oldComponent;
+  const newInstance = newComponent instanceof AbstractView ? newComponent.element : newComponent;
 
-  const parent = oldElement.parentElement;
-
-  if (parent === null) {
-    throw new Error('Parent element doesn\'t exist');
+  if (!((oldInstance instanceof Element) && (newInstance instanceof Element))) {
+    throw new Error('Can\'t replace non-Element instance');
   }
 
-  parent.replaceChild(newElement, oldElement);
+  oldInstance.replaceWith(newInstance);
 }
 
 /**
@@ -77,4 +78,4 @@ function remove(component) {
   component.removeElement();
 }
 
-export {RenderPosition, createElement, render, replace, remove};
+export { RenderPosition, createElement, render, replace, remove };

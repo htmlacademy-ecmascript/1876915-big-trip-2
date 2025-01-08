@@ -1,12 +1,16 @@
-import { render, RenderPosition } from '../render';
 import FilterView from '../view/filter-view';
 import TripInfoView from '../view/trip-info-view';
+import { SortType } from '../const';
+import { sortEvents } from '../utils/sort';
+import { render, RenderPosition } from '../framework/render';
 
 export default class HeaderPresenter {
   #headerContainer = null;
   #filterContainer = null;
-  #filter = new FilterView();
   #tripInfo = null;
+
+  #filters = [];
+  #events = [];
 
   #tripModel = null;
 
@@ -17,8 +21,14 @@ export default class HeaderPresenter {
   }
 
   init() {
-    this.#tripInfo = new TripInfoView(this.#tripModel.tripInfo);
-    render(this.#headerContainer, this.#tripInfo, RenderPosition.AFTERBEGIN);
-    render(this.#filterContainer, this.#filter);
+
+    this.#events = sortEvents(this.#tripModel.events, SortType.DAY);
+
+    if (this.#events.length !== 0) {
+      this.#tripInfo = new TripInfoView(this.#events);
+      render(this.#headerContainer, this.#tripInfo, RenderPosition.AFTERBEGIN);
+    }
+    this.#filters = new FilterView(this.#tripModel.filters, this.#tripModel.filterType);
+    render(this.#filterContainer, this.#filters);
   }
 }

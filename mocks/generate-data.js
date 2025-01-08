@@ -1,4 +1,4 @@
-import { mix } from '../src/utils';
+import { mix } from '../src/utils/common';
 import { getDestinationMocks } from './destination';
 import { getOfferMocks } from './offer';
 import { getPointMocks } from './point';
