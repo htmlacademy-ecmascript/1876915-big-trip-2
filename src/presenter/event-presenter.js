@@ -8,6 +8,7 @@ export default class EventPresenter {
   #eventComponent = null;
   #formComponent = null;
 
+  /** @type {TripEvent} */
   #event = null;
   #onEventChangeCallback = null;
   #onFormSubmitCallback = null;

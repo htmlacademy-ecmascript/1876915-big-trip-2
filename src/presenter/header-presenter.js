@@ -10,8 +10,11 @@ export default class HeaderPresenter {
   #tripInfo = null;
 
   #filters = [];
+
+  /** @type {TripEvent[]} */
   #events = [];
 
+  /** @type {TripModel} */
   #tripModel = null;
 
   constructor(headerContainer, filtersContainer, tripModel) {
