@@ -9,8 +9,8 @@ export const DateFormat = {
 };
 
 export const EventMode = {
-  DEFAULT: false,
-  EDIT: true,
+  DEFAULT: 'default',
+  EDIT: 'edit',
 };
 
 export const FilterType = {
@@ -36,8 +36,8 @@ export const SortType = {
 };
 
 export const FormType = {
-  CREATE: 'CREATE',
-  EDIT: 'EDIT',
+  CREATE: 'create',
+  EDIT: 'edit',
 };
 
 export const KeyCode = {

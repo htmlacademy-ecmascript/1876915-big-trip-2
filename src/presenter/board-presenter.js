@@ -13,20 +13,15 @@ export default class BoardPresenter {
   #boardContainer = null;
   #newEventButtonContainer = null;
 
-
   #eventListComponent = new EventListView();
   #newEventButtonComponent = new NewEventButtonView();
 
-  /**
-   * @type {TripEvent[]}
-  */
+  /** @type {TripEvent[]} */
   #events = [];
   #destinations = [];
   #offerTypes = [];
 
-  /**
-   * @type {TripModel}
-  */
+  /** @type {TripModel} */
   #tripModel = null;
 
   #activeSortType = SortType.PRICE;
@@ -57,12 +52,14 @@ export default class BoardPresenter {
     }
 
     this.#renderSort();
+    this.#renderEventList();
+    this.#renderEvents();
+  };
 
+  #renderEventList = () => {
     render(this.#boardContainer, this.#eventListComponent);
     this.#eventListComponent.setEventToggleHandler(this.#eventToggleHandler);
     this.#eventListComponent.setEscKeyDownHandler(this.#escKeyHandler);
-
-    this.#renderEvents();
   };
 
   #renderSort = () => {
