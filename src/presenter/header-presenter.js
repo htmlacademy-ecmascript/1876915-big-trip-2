@@ -2,7 +2,7 @@ import FilterView from '../view/filter-view';
 import TripInfoView from '../view/trip-info-view';
 import { SortType } from '../const';
 import { sortEvents } from '../utils/sort';
-import { render, RenderPosition } from '../render';
+import { render, RenderPosition } from '../framework/render';
 
 export default class HeaderPresenter {
   #headerContainer = null;

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
-import AbstractView from './abstract-view';
-import { ButtonText, DateFormat, FormMode } from '../const';
+import AbstractView from '../framework/view/abstract-view';
+import { ButtonText, DateFormat, FormType } from '../const';
 import { nanoid } from 'nanoid';
 import { capitalizeFirstLetter } from '../utils/event';
 
@@ -110,7 +110,7 @@ const createFormTemplate = (event, destinations, offerTypes, mode) => {
     type,
   } = event || {};
 
-  const exitButtonText = mode === FormMode.EDIT ? ButtonText.DELETE : ButtonText.CANCEL;
+  const exitButtonText = mode === FormType.EDIT ? ButtonText.DELETE : ButtonText.CANCEL;
   const submitButtonText = ButtonText.SAVE;
   const eventTypeListTemplate = createEventTypeListTemplate(type, offerTypes);
   const destinationListTemplate = createDestinationListTemplate({ type, destination }, destinations);
@@ -125,67 +125,79 @@ const createFormTemplate = (event, destinations, offerTypes, mode) => {
   const eventPriceTemplate = createEventPriceTemplate(price);
 
   return (`
-    <form class="event event--edit" action="#" method="post" data-event-id = ${id}>
-      <header class="event__header">
-        <div class="event__type-wrapper">
-          <label class="event__type  event__type-btn" for="event-type-toggle-${id}">
-            <span class="visually-hidden">Choose event type</span>
-            <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
-          </label>
-          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox">
-          ${eventTypeListTemplate}
-        </div>
+    <li class="trip-events__item" data-event-id = ${id}>
+      <form class="event event--edit" action="#" method="post">
+        <header class="event__header">
+          <div class="event__type-wrapper">
+            <label class="event__type  event__type-btn" for="event-type-toggle-${id}">
+              <span class="visually-hidden">Choose event type</span>
+              <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
+            </label>
+            <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox">
+            ${eventTypeListTemplate}
+          </div>
 
-        ${destinationListTemplate}
-        ${eventTimeTemplate}
-        ${eventPriceTemplate}
+          ${destinationListTemplate}
+          ${eventTimeTemplate}
+          ${eventPriceTemplate}
 
-        <button class="event__save-btn  btn  btn--blue" type="submit">${submitButtonText}</button>
-        <button class="event__reset-btn" type="reset">${exitButtonText}</button>
-        <button class="event__rollup-btn" type="button">
-          <span class="visually-hidden">Close event</span>
-        </button>
-      </header>
+          <button class="event__save-btn  btn  btn--blue" type="submit">${submitButtonText}</button>
+          <button class="event__reset-btn" type="reset">${exitButtonText}</button>
+          <button class="event__rollup-btn" type="button">
+            <span class="visually-hidden">Close event</span>
+          </button>
+        </header>
 
-      ${(destinationTemplate || offerDetailsListTemplate) ? `
-        <section class="event__details">
-          ${offerDetailsListTemplate}
-          ${destinationTemplate}
-        </section>` : ''}
-    </form>`
+        ${(destinationTemplate || offerDetailsListTemplate) ? `
+          <section class="event__details">
+            ${offerDetailsListTemplate}
+            ${destinationTemplate}
+          </section>` : ''}
+      </form>
+    </li>`
   );
 };
 
 export default class FormView extends AbstractView {
 
   #eventId = '';
-  #eventData = [];
+  #event = [];
   #destinations = [];
   #offerTypes = [];
-  #mode = FormMode.EDIT;
+  #mode = FormType.EDIT;
   #onFormSubmitCallback = null;
+  #onOfferClickCallback = null;
 
-  constructor(event, destinations, offerTypes, mode = FormMode.EDIT) {
+  constructor(event, destinations, offerTypes, mode = FormType.EDIT) {
     super();
     this.#eventId = event.id;
-    this.#eventData = event;
+    this.#event = event;
     this.#destinations = destinations;
     this.#offerTypes = offerTypes;
-    this.#mode = mode in FormMode ? mode : FormMode.EDIT;
+    this.#mode = mode in FormType ? mode : FormType.EDIT;
 
-    this.createEventListener(this.element, 'submit', this.#formSubmitHandler, { isPreventDefault: true });
+    this.createEventListener(this.element.firstElementChild, 'submit', this.#formSubmitHandler, { isPreventDefault: true });
+    this.createEventListener(this.element.firstElementChild, 'click', this.#offerClickHandler);
   }
 
   get template() {
-    return createFormTemplate(this.#eventData, this.#destinations, this.#offerTypes, this.#mode);
+    return createFormTemplate(this.#event, this.#destinations, this.#offerTypes, this.#mode);
   }
 
   setOnFormSubmitHandler = (callback) => {
     this.#onFormSubmitCallback = callback;
   };
 
+  setOnOfferClickHandler = (callback) => {
+    this.#onOfferClickCallback = callback;
+  };
+
   #formSubmitHandler = () => {
-    this.#onFormSubmitCallback?.(this.#eventId);
+    this.#onFormSubmitCallback?.(this.#event);
+  };
+
+  #offerClickHandler = () => {
+    this.#onFormSubmitCallback?.(this.#event);
   };
 }
 

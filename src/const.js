@@ -8,6 +8,11 @@ export const DateFormat = {
   INFO_SHORT_HUMAN: 'DD',
 };
 
+export const EventMode = {
+  DEFAULT: false,
+  EDIT: true,
+};
+
 export const FilterType = {
   EVERYTHING: 'everything',
   FUTURE: 'future',
@@ -30,7 +35,7 @@ export const SortType = {
   OFFER: 'offers',
 };
 
-export const FormMode = {
+export const FormType = {
   CREATE: 'CREATE',
   EDIT: 'EDIT',
 };
@@ -50,7 +55,7 @@ export const tripDefault = {
 
 export const ElementSelectors = {
   ROLL_UP_BUTTON: '.event__rollup-btn',
-  EVENT_ITEM: '.event',
+  EVENT_ITEM: '.trip-events__item',
 };
 
 export const ButtonText = {

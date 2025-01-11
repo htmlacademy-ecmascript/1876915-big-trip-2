@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import AbstractView from './abstract-view';
+import AbstractView from '../framework/view/abstract-view';
 import { DateFormat, TripTitleQuantity } from '../const';
 
 const createTripTittle = (events, lastEvent, length) => {

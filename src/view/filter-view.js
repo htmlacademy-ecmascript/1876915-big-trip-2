@@ -1,4 +1,4 @@
-import AbstractView from './abstract-view';
+import AbstractView from '../framework/view/abstract-view';
 
 const createFiltersItemTemplate = (filters, activeFilter) => filters.map(({ type, count }) => {
 

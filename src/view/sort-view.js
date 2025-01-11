@@ -1,4 +1,4 @@
-import AbstractView from './abstract-view';
+import AbstractView from '../framework/view/abstract-view';
 
 const createSortItemTemplate = (sortItems, activeFilter) => sortItems.map(({ type, count }) => {
 
@@ -9,7 +9,7 @@ const createSortItemTemplate = (sortItems, activeFilter) => sortItems.map(({ typ
     <div class="trip-sort__item  trip-sort__item--${type}">
       <input id="sort-${type}" class="trip-sort__input  visually-hidden"
         type="radio" name="trip-sort" value="sort-${type}" ${checkStatus} ${disableStatus}>
-        <label class="trip-sort__btn" for="sort-${type}">${type}</label>
+      <label class="trip-sort__btn" for="sort-${type}">${type}</label>
     </div>`
   );
 }).join('');
@@ -23,15 +23,37 @@ const createSortTemplate = (sortItems, sortType) => (`
 export default class SortView extends AbstractView {
   #sortItems = [];
   #activeSortType = '';
+  #onSortClickHandler = null;
 
   constructor(sortItems, sortType) {
     super();
     this.#sortItems = sortItems;
     this.#activeSortType = sortType;
+
+    this.createEventListener(this.element, 'click', this.#sortClickHandler);
   }
 
   get template() {
     return createSortTemplate(this.#sortItems, this.#activeSortType);
   }
+
+  setOnSortClickHandler = (callback) => {
+    this.#onSortClickHandler = callback;
+  };
+
+  #sortClickHandler = (evt) => {
+    if (evt.target.tagName !== 'LABEL') {
+      return;
+    }
+
+    const sortType = evt.target.textContent;
+    const isDisabled = this.element[`sort-${sortType}`].disabled;
+
+    if (isDisabled) {
+      return;
+    }
+
+    this.#onSortClickHandler?.(sortType);
+  };
 }
 

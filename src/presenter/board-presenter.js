@@ -1,39 +1,37 @@
-import { render, replace } from '../render';
 import { sortEvents } from '../utils/sort';
-import { ElementSelectors as E, EventListMessage, KeyCode, SortType } from '../const';
+import { ElementSelectors as E, EventListMessage, EventMode, KeyCode, SortType } from '../const';
 import SortView from '../view/sort-view';
-import FormView from '../view/form-view';
-import EventView from '../view/event-view';
 import EventListView from '../view/event-list-view';
-import EmptyEventListView from '../view/empty-event-list-view';
-import EventListItemView from '../view/event-list-item-view';
+import NoEventsView from '../view/no-events-view';
 import NewEventButtonView from '../view/new-event-button-view';
 import { filterEvents } from '../utils/filter';
+import EventPresenter from './event-presenter';
+import { render } from '../framework/render';
+import { updateItem } from '../utils/common';
 
 export default class BoardPresenter {
   #boardContainer = null;
   #newEventButtonContainer = null;
 
-  #activeSortType = SortType.PRICE;
-  #emptyEventList = null;
 
-  #eventList = new EventListView(EventListItemView);
-  #newEventButton = new NewEventButtonView();
+  #eventListComponent = new EventListView();
+  #newEventButtonComponent = new NewEventButtonView();
 
   /**
    * @type {TripEvent[]}
-   */
+  */
   #events = [];
   #destinations = [];
   #offerTypes = [];
 
   /**
    * @type {TripModel}
-   */
+  */
   #tripModel = null;
 
-  #eventComponents = new Map();
-  #activeComponent = '';
+  #activeSortType = SortType.PRICE;
+  #eventPresenters = new Map();
+  #activeEventId = '';
 
   constructor(boardContainer, newEventButtonContainer, tripModel) {
     this.#boardContainer = boardContainer;
@@ -42,68 +40,97 @@ export default class BoardPresenter {
   }
 
   init() {
-    this.#events = [...this.#tripModel.events];
+    this.#events = filterEvents([...this.#tripModel.events], this.#tripModel.filterType);
     this.#destinations = [...this.#tripModel.destinations];
     this.#offerTypes = [...this.#tripModel.offerTypes];
+
     this.#renderBoard();
-    render(this.#newEventButtonContainer, this.#newEventButton);
   }
 
   #renderBoard = () => {
 
-    const filter = this.#tripModel.filterType;
-    const filteredEvents = filterEvents(this.#events, filter);
+    render(this.#newEventButtonContainer, this.#newEventButtonComponent);
 
-    if (filteredEvents.length === 0) {
-      this.#emptyEventList = new EmptyEventListView(EventListMessage[filter]);
-      render(this.#boardContainer, this.#emptyEventList);
+    if (this.#events.length === 0) {
+      render(this.#boardContainer, new NoEventsView(EventListMessage[this.#tripModel.filterType]));
       return;
     }
 
-    render(this.#boardContainer, new SortView(this.#tripModel.sortItems, this.#activeSortType));
-    render(this.#boardContainer, this.#eventList);
-    this.#eventList.setEventToggleHandler(this.#eventToggleHandler);
-    this.#eventList.setEscKeyDownHandler(this.#escKeyHandler);
+    this.#renderSort();
 
-    this.#renderEvents(sortEvents(filteredEvents, this.#activeSortType));
+    render(this.#boardContainer, this.#eventListComponent);
+    this.#eventListComponent.setEventToggleHandler(this.#eventToggleHandler);
+    this.#eventListComponent.setEscKeyDownHandler(this.#escKeyHandler);
+
+    this.#renderEvents();
   };
 
-  #renderEvents = (events) => {
-    for (const event of events) {
-      const eventComponent = new EventView(event);
-      const formComponent = new FormView(event, this.#destinations, this.#offerTypes);
-      formComponent.setOnFormSubmitHandler(this.#toggleEventForm);
-      this.#eventComponents.set(event.id, [eventComponent, formComponent]);
-      this.#eventList.add(eventComponent);
+  #renderSort = () => {
+    const sortComponent = new SortView(this.#tripModel.sortItems, this.#activeSortType);
+    sortComponent.setOnSortClickHandler(this.#sortChangeHandler);
+
+    render(this.#boardContainer, sortComponent);
+  };
+
+  #renderEvents = () => sortEvents(this.#events, this.#activeSortType)
+    .forEach((event) => {
+      const presenter = new EventPresenter(this.#eventListComponent.element);
+      presenter.init(event, this.#destinations, this.#offerTypes);
+      presenter.setOnFormSubmitHandler(this.#formSubmitHandler);
+      presenter.setOnDataChangeHandler(this.#eventChangeHandler);
+
+      this.#eventPresenters.set(event.id, presenter);
+    });
+
+  #clearEventList = () => {
+    this.#eventPresenters.forEach((presenter) => presenter.destroy());
+    this.#eventPresenters.clear();
+  };
+
+  #sortChangeHandler = (sortType) => {
+    if ((sortType === this.#activeSortType) || !(Object.values(SortType).includes(sortType))) {
+      return;
     }
+
+    this.#activeSortType = sortType;
+    this.#clearEventList();
+    this.#renderEvents();
   };
 
-  #toggleEventForm = (newEventId = '') => {
-    const eventId = this.#activeComponent;
-    if (this.#activeComponent) {
-      const [eventComponent, formComponent] = this.#eventComponents.get(eventId);
-      replace(formComponent, eventComponent);
-      this.#activeComponent = '';
+  #eventChangeHandler = (updatedEvent) => {
+    this.#events = updateItem(this.#events, updatedEvent);
+    this.#eventPresenters.get(updatedEvent.id).init(updatedEvent);
+  };
+
+  #toggleEventMode = (newEventId = '') => {
+    const eventId = this.#activeEventId;
+    if (this.#activeEventId) {
+      this.#eventPresenters.get(eventId).toggleEventView(EventMode.DEFAULT);
+      this.#activeEventId = '';
     }
 
     if (newEventId && (eventId !== newEventId)) {
-      const [eventComponent, formComponent] = this.#eventComponents.get(newEventId);
-      replace(eventComponent, formComponent);
-      this.#activeComponent = newEventId;
+      this.#eventPresenters.get(newEventId).toggleEventView(EventMode.EDIT);
+      this.#activeEventId = newEventId;
     }
   };
 
   #escKeyHandler = (evt) => {
-    if ((evt.key === KeyCode.ESC) && (this.#activeComponent)) {
-      this.#toggleEventForm();
+    if ((evt.key === KeyCode.ESC) && (this.#activeEventId)) {
+      this.#toggleEventMode();
     }
+  };
+
+  #formSubmitHandler = (updatedEvent) => {
+    this.#eventChangeHandler(updatedEvent);
+    this.#toggleEventMode(updatedEvent.id);
   };
 
   #eventToggleHandler = ({ target }) => {
     if (target.matches(E.ROLL_UP_BUTTON)) {
       const eventItem = target.closest(E.EVENT_ITEM);
       const eventId = eventItem?.dataset.eventId;
-      this.#toggleEventForm(eventId);
+      this.#toggleEventMode(eventId);
     }
   };
 }
