@@ -1,57 +1,72 @@
 import dayjs from 'dayjs';
-import AbstractView from '../framework/view/abstract-view';
-import { ButtonText, DateFormat, FormType } from '../const';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
+import { ButtonText, DateFormat, FormType, KeyCode } from '../const';
 import { nanoid } from 'nanoid';
 import { capitalizeFirstLetter } from '../utils/event';
 
-const createEventTypeItemTemplate = (eventType, offerTypes = []) => offerTypes.map((type) => {
-  const id = nanoid();
-  const checkStatus = eventType === type ? 'checked' : '';
-  return (`
-    <div class="event__type-item">
-      <input id="event-type-taxi-${id}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${checkStatus}>
-        <label class="event__type-label  event__type-label--${type}" for="event-type-taxi-${id}">${capitalizeFirstLetter(type)}</label>
-    </div>`
-  );
-}).join('');
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.min.css';
 
-const createEventTypeListTemplate = (eventType, offerTypes) => (`
+const createEventTypeItemTemplate = (eventType, offers) => {
+  let list = '';
+  for (const type of offers.keys()) {
+    const checkStatus = eventType === type ? 'checked' : '';
+    list += (`
+      <div class="event__type-item" data-event-type="${type}">
+        <input id="event-type-${type}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${checkStatus}>
+        <label class="event__type-label  event__type-label--${type}" for="event-type-${type}">${capitalizeFirstLetter(type)}</label>
+      </div>`);
+  }
+
+  return list;
+};
+
+const createEventTypeListTemplate = (eventType, offers) => (`
   <div class="event__type-list">
     <fieldset class="event__type-group">
       <legend class="visually-hidden">Event type</legend>
-        ${createEventTypeItemTemplate(eventType, offerTypes)}
+        ${createEventTypeItemTemplate(eventType, offers)}
     </fieldset>
   </div>`
 );
 
-const createOfferListItemTemplate = (offers) => offers.map(({ id, title, price, isChecked }) => (`
+const createOfferListItemTemplate = (offers, offerIds) => offers.map(({ id, title, price }) => {
+  const checkStatus = offerIds.some((offerId) => offerId === id) ? 'checked' : '';
+
+  return (`
     <div class="event__offer-selector">
-      <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}" type="checkbox" name="event-offer-${id}" ${isChecked ? 'checked' : ''}>
+      <input class="event__offer-checkbox  visually-hidden" id="event-offer-${id}" type="checkbox"
+        name="event-offer-${id}" data-event-offer-id="${id}" ${checkStatus}>
       <label class="event__offer-label" for="event-offer-${id}">
         <span class="event__offer-title">${title}</span>
         &plus;&euro;&nbsp;
         <span class="event__offer-price">${price}</span>
       </label>
-    </div>`
-)).join('');
+    </div>`);
+}).join('');
 
-const createOfferListTemplate = (offers) => (`
+const createOfferListTemplate = (offers, offerIds) => (`
     <section class="event__section  event__section--offers">
       <h3 class="event__section-title  event__section-title--offers">Offers</h3>
       <div class="event__available-offers">
-        ${createOfferListItemTemplate(offers)}
+        ${createOfferListItemTemplate(offers, offerIds)}
       </div>
     </section>`
 );
 
-const createDestinationListTemplate = ({ type, destination }, destinations = []) => {
-  const [labelId, listId] = [nanoid(), nanoid()];
+const createDestinationListTemplate = (type, destination, destinations = []) => {
+  const listId = nanoid();
+  let list = '';
+  for (const { id, name } of destinations.values()) {
+    list += `<option value="${name}" data-destination-id="${id}"></option>`;
+  }
+
   return (`
     <div div class="event__field-group  event__field-group--destination" >
-      <label class="event__label  event__type-output" for="event-destination-${labelId}">${type}</label>
-      <input class="event__input  event__input--destination" id="event-destination-${labelId}" type="text" name="event-destination" value="${destination ? destination.name : ''}" list="destination-list-${listId}">
+      <label class="event__label  event__type-output" for="event-destination-${destination.id}">${type}</label>
+      <input class="event__input  event__input--destination" id="event-destination-${destination.id}" type="text" name="event-destination" value="${destination ? destination.name : ''}" list="destination-list-${listId}">
       <datalist id="destination-list-${listId}">
-          ${destinations.map(({ name }) => `<option value="${name}"></option>`).join('')}
+          ${list}
       </datalist>
     </div>`
   );
@@ -99,23 +114,27 @@ const createEventPriceTemplate = (price) => {
   );
 };
 
-const createFormTemplate = (event, destinations, offerTypes, mode) => {
+const createFormTemplate = (event, destinations, offers, mode) => {
   const {
     id,
     basePrice,
     dateFrom,
     dateTo,
-    destination,
-    offers,
+    destinationId,
+    offerIds,
     type,
   } = event || {};
 
+  const destination = destinations.get(destinationId);
+  const eventOffers = offers.get(type);
+
   const exitButtonText = mode === FormType.EDIT ? ButtonText.DELETE : ButtonText.CANCEL;
   const submitButtonText = ButtonText.SAVE;
-  const eventTypeListTemplate = createEventTypeListTemplate(type, offerTypes);
-  const destinationListTemplate = createDestinationListTemplate({ type, destination }, destinations);
-  const offerDetailsListTemplate = (offers.length > 0) ? createOfferListTemplate(offers) : '';
-  const destinationTemplate = destination && (destination.pictures.length || destination.description) ? createDestinationTemplate(destination) : '';
+  const eventTypeListTemplate = createEventTypeListTemplate(type, offers);
+  const destinationListTemplate = createDestinationListTemplate(type, destination, destinations);
+
+  const offerDetailsListTemplate = (eventOffers.length > 0) ? createOfferListTemplate(offers.get(type), offerIds) : '';
+  const destinationTemplate = destinationId && (destination.pictures.length || destination.description) ? createDestinationTemplate(destination) : '';
 
   const dateStart = dayjs(dateFrom).format(DateFormat.FORM_START);
   const dateEnd = dayjs(dateTo).format(DateFormat.FORM_START);
@@ -158,30 +177,49 @@ const createFormTemplate = (event, destinations, offerTypes, mode) => {
   );
 };
 
-export default class FormView extends AbstractView {
-
-  #eventId = '';
-  #event = [];
-  #destinations = [];
-  #offerTypes = [];
+export default class FormView extends AbstractStatefulView {
+  #offers = null;
+  #destinations = null;
+  #destinationNames = [];
   #mode = FormType.EDIT;
   #onFormSubmitCallback = null;
   #onOfferClickCallback = null;
 
-  constructor(event, destinations, offerTypes, mode = FormType.EDIT) {
-    super();
-    this.#eventId = event.id;
-    this.#event = event;
-    this.#destinations = destinations;
-    this.#offerTypes = offerTypes;
-    this.#mode = mode in FormType ? mode : FormType.EDIT;
+  #destinationInputValue = '';
+  #datepicker = null;
 
-    this.createEventListener(this.element.firstElementChild, 'submit', this.#formSubmitHandler, { isPreventDefault: true });
-    this.createEventListener(this.element.firstElementChild, 'click', this.#offerClickHandler);
+  constructor(event, offers, destinations, mode = FormType.EDIT) {
+    super();
+    this.#offers = offers;
+    this.#destinations = destinations;
+    this.#destinationNames = Array.from(destinations.values()).map((item) => item.name);
+    this.#mode = mode in FormType ? mode : FormType.EDIT;
+    this._setState(event);
+    this._restoreHandlers();
   }
 
   get template() {
-    return createFormTemplate(this.#event, this.#destinations, this.#offerTypes, this.#mode);
+    return createFormTemplate(this._state, this.#destinations, this.#offers, this.#mode);
+  }
+
+  _restoreHandlers = () => {
+    this.createEventListener(this.element.firstElementChild, 'keydown', this.#formEnterKeyHandler);
+    this.createEventListener(this.element.firstElementChild, 'submit', this.#formSubmitHandler, { isPreventDefault: true });
+    this.createEventListener(this.element.firstElementChild, 'click', this.#offerClickHandler);
+    this.createEventListener('.event__type-list', 'change', this.#eventTypeChangeHandler);
+
+    this.createEventListener('.event__input--destination', 'input', this.#inputDestinationInputHandler);
+    this.createEventListener('.event__input--destination', 'change', this.#inputDestinationChangeHandler);
+    this.createEventListener('.event__input--destination', 'focus', this.#inputDestinationFocusHandler);
+    this.createEventListener('.event__input--destination', 'blur', this.#inputDestinationBlurHandler);
+  };
+
+  removeElement() {
+    super.removeElement();
+    if (this.#datepicker) {
+      this.#datepicker.destroy();
+      this.#datepicker = null;
+    }
   }
 
   setOnFormSubmitHandler = (callback) => {
@@ -192,12 +230,84 @@ export default class FormView extends AbstractView {
     this.#onOfferClickCallback = callback;
   };
 
-  #formSubmitHandler = () => {
-    this.#onFormSubmitCallback?.(this.#event);
+  #eventTypeChangeHandler = (evt) => {
+    const parent = evt.target.closest('.event__type-item');
+    if (!parent) {
+      return;
+    }
+
+    const type = parent.dataset.eventType;
+    if (type === this._state.type) {
+      return;
+    }
+
+    this.updateElement({ offerIds: [], type });
   };
 
-  #offerClickHandler = () => {
-    this.#onFormSubmitCallback?.(this.#event);
+  #inputDestinationFocusHandler = ({ target }) => {
+    this.#destinationInputValue = target.value;
+    target.value = '';
   };
+
+  #inputDestinationInputHandler = ({ target }) => {
+    target.blur();
+  };
+
+  #inputDestinationChangeHandler = ({ target }) => {
+    const isUpdateNeed = this.#destinationNames.includes(target.value) && (target.value !== this.#destinationInputValue);
+    const option = this.element.querySelector(`option[value="${target.value}"]`);
+
+    if (isUpdateNeed && option) {
+      this.updateElement({ destinationId: option.dataset.destinationId });
+    }
+  };
+
+  #inputDestinationBlurHandler = ({ target }) => {
+    if (!this.#destinationNames.includes(target.value)) {
+      target.value = this.#destinationInputValue;
+    }
+  };
+
+  #offerClickHandler = ({ target }) => {
+    if (!target.matches('.event__offer-checkbox')) {
+      return;
+    }
+
+    const offersIds = new Set(this._state.offerIds);
+    const newOfferId = target.dataset.eventOfferId;
+
+    if (target.checked && newOfferId) {
+      offersIds.add(newOfferId);
+    } else {
+      offersIds.delete(newOfferId);
+    }
+
+    this._setState({ offerIds: [...offersIds] });
+  };
+
+  #formEnterKeyHandler = (evt) => {
+    if (!evt.target.matches('.event__save-btn') && (evt.key === KeyCode.ENTER)) {
+      evt.preventDefault();
+    }
+  };
+
+  #formSubmitHandler = () => {
+    this.#onFormSubmitCallback?.(this._state);
+  };
+
+  #setDatepicker() {
+    if (this.#mode === FormType.EDIT) {
+      // flatpickr есть смысл инициализировать только в случае,
+      // если поле выбора даты доступно для заполнения
+      // this.#datepicker = flatpickr(
+      //   this.element.querySelector('.card__date'),
+      //   {
+      //     dateFormat: 'j F',
+      //     defaultDate: this._state.dueDate,
+      //     onChange: this.#dueDateChangeHandler, // На событие flatpickr передаём наш колбэк
+      //   },
+      // );
+    }
+  }
 }
 

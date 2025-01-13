@@ -18,16 +18,16 @@ export default class EventPresenter {
     this.#eventContainer = eventContainer;
   }
 
-  init(event, destinations, offerTypes) {
+  init(event, offers, destinations) {
 
     this.#event = event;
 
     const prevEventComponent = this.#eventComponent;
     const prevFormComponent = this.#formComponent;
 
-    this.#eventComponent = new EventView(event);
+    this.#eventComponent = new EventView(event, offers, destinations);
     this.#eventComponent.setOnFavoriteClickHandler(this.#favoriteClickHandler);
-    this.#formComponent = new FormView(event, destinations, offerTypes);
+    this.#formComponent = new FormView(event, offers, destinations);
     this.#formComponent.setOnFormSubmitHandler(this.#formSubmitHandler);
     this.#formComponent.setOnOfferClickHandler(this.#offerClickHandler);
 
@@ -66,6 +66,7 @@ export default class EventPresenter {
 
   toggleEventView = (direction = EventMode.DEFAULT) => {
     if (direction === EventMode.DEFAULT) {
+      this.#formComponent.updateElement(this.#event);
       replace(this.#formComponent, this.#eventComponent);
     } else {
       replace(this.#eventComponent, this.#formComponent);

@@ -5,9 +5,8 @@ import { FilterType, tripDefault } from '../const';
 
 export default class TripModel {
   #events = [];
-  #rawEvents = [];
-  #destinations = [];
-  #offers = [];
+  #destinations = new Map();
+  #offers = new Map();
   #filterType = FilterType.EVERYTHING;
 
   get events() {
@@ -16,6 +15,10 @@ export default class TripModel {
 
   get destinations() {
     return this.#destinations;
+  }
+
+  get offers() {
+    return this.#offers;
   }
 
   get filters() {
@@ -30,35 +33,30 @@ export default class TripModel {
     return this.#filterType;
   }
 
-  get offerTypes() {
-    return this.#offers.map(({ type }) => type);
-  }
-
   getDefaultEvent = () => {
     const date = new Date().toISOString();
-    const type = this.#offers.some((offer) => offer.type === tripDefault.type) ? tripDefault.type : this.#offers[0];
+    const type = this.#offers.has(tripDefault.type) ? tripDefault.type : this.#offers.keys()[0];
 
     return {
       ...tripDefault,
       dateFrom: date,
       dateTo: date,
-      offers: this.#prepareOffers(type, tripDefault.offers),
+      offerIds: this.#offers.get(type),
       type,
     };
   };
 
-  #prepareOffers = (type, offerIds) => {
-    const offers = this.#offers.find((offer) => offer.type === type)?.offers || [];
-    return offers.map((offer) => ({ ...offer, isChecked: offerIds.some((offerId) => offerId === offer.id) }));
-  };
-
   init() {
-    [this.#rawEvents, this.#offers, this.#destinations] = generateTripData();
+    const [rawEvents, rawOffers, rawDestinations] = generateTripData();
 
-    this.#events = this.#rawEvents.map((event) => ({
-      ...event,
-      destination: this.#destinations.find(({ id }) => id === event.destination),
-      offers: this.#prepareOffers(event.type, event.offers),
-    }));
+    this.#events = rawEvents;
+
+    rawOffers.forEach(({ type, offers }) => {
+      this.#offers.set(type, offers);
+    });
+
+    rawDestinations.forEach((destination) => {
+      this.#destinations.set(destination.id, destination);
+    });
   }
 }
