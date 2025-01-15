@@ -6,6 +6,7 @@ export const DateFormat = {
   FORM_START: 'YY/MM/DD HH:mm',
   INFO_HUMAN: 'DD MMM',
   INFO_SHORT_HUMAN: 'DD',
+  FORM_INPUT: 'd/m/y H:i',
 };
 
 export const EventMode = {

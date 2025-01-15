@@ -57,8 +57,8 @@ const createOfferListTemplate = (offers, offerIds) => (`
 const createDestinationListTemplate = (type, destination, destinations = []) => {
   const listId = nanoid();
   let list = '';
-  for (const { id, name } of destinations.values()) {
-    list += `<option value="${name}" data-destination-id="${id}"></option>`;
+  for (const { name } of destinations.values()) {
+    list += `<option value="${name}"></option>`;
   }
 
   return (`
@@ -180,19 +180,18 @@ const createFormTemplate = (event, destinations, offers, mode) => {
 export default class FormView extends AbstractStatefulView {
   #offers = null;
   #destinations = null;
-  #destinationNames = [];
   #mode = FormType.EDIT;
   #onFormSubmitCallback = null;
-  #onOfferClickCallback = null;
 
   #destinationInputValue = '';
-  #datepicker = null;
+  #datePickerFrom = null;
+  #datePickerTo = null;
+  #saveButton = null;
 
   constructor(event, offers, destinations, mode = FormType.EDIT) {
     super();
     this.#offers = offers;
     this.#destinations = destinations;
-    this.#destinationNames = Array.from(destinations.values()).map((item) => item.name);
     this.#mode = mode in FormType ? mode : FormType.EDIT;
     this._setState(event);
     this._restoreHandlers();
@@ -212,22 +211,28 @@ export default class FormView extends AbstractStatefulView {
     this.createEventListener('.event__input--destination', 'change', this.#inputDestinationChangeHandler);
     this.createEventListener('.event__input--destination', 'focus', this.#inputDestinationFocusHandler);
     this.createEventListener('.event__input--destination', 'blur', this.#inputDestinationBlurHandler);
+
+    if (this.#mode === FormType.EDIT) {
+      this.#initDatepicker();
+    }
+    this.#enableSaveButton();
   };
 
   removeElement() {
     super.removeElement();
-    if (this.#datepicker) {
-      this.#datepicker.destroy();
-      this.#datepicker = null;
+    if (this.#datePickerFrom) {
+      this.#datePickerFrom.destroy();
+      this.#datePickerFrom = null;
+    }
+
+    if (this.#datePickerFrom) {
+      this.#datePickerTo.destroy();
+      this.#datePickerTo = null;
     }
   }
 
   setOnFormSubmitHandler = (callback) => {
     this.#onFormSubmitCallback = callback;
-  };
-
-  setOnOfferClickHandler = (callback) => {
-    this.#onOfferClickCallback = callback;
   };
 
   #eventTypeChangeHandler = (evt) => {
@@ -254,16 +259,18 @@ export default class FormView extends AbstractStatefulView {
   };
 
   #inputDestinationChangeHandler = ({ target }) => {
-    const isUpdateNeed = this.#destinationNames.includes(target.value) && (target.value !== this.#destinationInputValue);
-    const option = this.element.querySelector(`option[value="${target.value}"]`);
-
-    if (isUpdateNeed && option) {
-      this.updateElement({ destinationId: option.dataset.destinationId });
+    const name = target.value;
+    for (const item of this.#destinations.values()) {
+      if ((item.name === name) && (this.#destinationInputValue !== name)) {
+        this.updateElement({ destinationId: item.id });
+        return;
+      }
     }
+    target.value = '';
   };
 
   #inputDestinationBlurHandler = ({ target }) => {
-    if (!this.#destinationNames.includes(target.value)) {
+    if (target.value === '') {
       target.value = this.#destinationInputValue;
     }
   };
@@ -286,7 +293,7 @@ export default class FormView extends AbstractStatefulView {
   };
 
   #formEnterKeyHandler = (evt) => {
-    if (!evt.target.matches('.event__save-btn') && (evt.key === KeyCode.ENTER)) {
+    if ((evt.target !== this.#saveButton) && (evt.key === KeyCode.ENTER)) {
       evt.preventDefault();
     }
   };
@@ -295,19 +302,67 @@ export default class FormView extends AbstractStatefulView {
     this.#onFormSubmitCallback?.(this._state);
   };
 
-  #setDatepicker() {
-    if (this.#mode === FormType.EDIT) {
-      // flatpickr есть смысл инициализировать только в случае,
-      // если поле выбора даты доступно для заполнения
-      // this.#datepicker = flatpickr(
-      //   this.element.querySelector('.card__date'),
-      //   {
-      //     dateFormat: 'j F',
-      //     defaultDate: this._state.dueDate,
-      //     onChange: this.#dueDateChangeHandler, // На событие flatpickr передаём наш колбэк
-      //   },
-      // );
+  #datePickerOpenHandler = () => {
+    this.#saveButton.disabled = true;
+  };
+
+  #datePickerCloseHandler = () => {
+    this.#saveButton.disabled = false;
+  };
+
+  #enableSaveButton = () => {
+    if (!this.#saveButton) {
+      this.#saveButton = this.element.querySelector('.event__save-btn');
     }
-  }
+
+    this.#saveButton.disabled = false;
+  };
+
+  #dateFromChangeHandler = ([date]) => {
+    this._setState({ dateFrom: new Date(date).toISOString() });
+  };
+
+  #dateToChangeHandler = ([date]) => {
+    this._setState({ dateTo: new Date(date).toISOString() });
+  };
+
+  #initDatepicker = () => {
+
+    const [inputFrom, inputTo] = this.element.querySelectorAll('.event__input--time');
+    const config = {
+      allowInput: false,
+      allowInvalidPreload: false,
+      enableTime: true,
+      dateFormat: DateFormat.FORM_INPUT,
+      minuteIncrement: 1,
+      locale: {
+        firstDayOfWeek: 1,
+      },
+      'time_24hr': true,
+      onOpen: this.#datePickerOpenHandler,
+      onClose: this.#datePickerCloseHandler,
+    };
+
+    this.#datePickerFrom = flatpickr(
+      inputFrom,
+      {
+        ...config,
+        defaultDate: this._state.dateFrom,
+        maxDate: this._state.dateTo,
+        onChange: this.#dateFromChangeHandler,
+      },
+    );
+
+    this.#datePickerFrom = flatpickr(
+      inputTo,
+      {
+        ...config,
+        defaultDate: this._state.dateTo,
+        minDate: this._state.dateFrom,
+        onChange: this.#dateToChangeHandler,
+      },
+    );
+
+  };
 }
 
