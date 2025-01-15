@@ -12,24 +12,22 @@ export default class EventPresenter {
   #event = null;
   #onEventChangeCallback = null;
   #onFormSubmitCallback = null;
-  #onOfferClickCallback = null;
 
   constructor(eventContainer) {
     this.#eventContainer = eventContainer;
   }
 
-  init(event, destinations, offerTypes) {
+  init(event, offers, destinations) {
 
     this.#event = event;
 
     const prevEventComponent = this.#eventComponent;
     const prevFormComponent = this.#formComponent;
 
-    this.#eventComponent = new EventView(event);
+    this.#eventComponent = new EventView(event, offers, destinations);
     this.#eventComponent.setOnFavoriteClickHandler(this.#favoriteClickHandler);
-    this.#formComponent = new FormView(event, destinations, offerTypes);
+    this.#formComponent = new FormView(event, offers, destinations);
     this.#formComponent.setOnFormSubmitHandler(this.#formSubmitHandler);
-    this.#formComponent.setOnOfferClickHandler(this.#offerClickHandler);
 
     if (prevEventComponent === null || prevFormComponent === null) {
       render(this.#eventContainer, this.#eventComponent);
@@ -60,12 +58,9 @@ export default class EventPresenter {
     this.#onFormSubmitCallback = callback;
   };
 
-  setOnOfferClickHandler = (callback) => {
-    this.#onOfferClickCallback = callback;
-  };
-
   toggleEventView = (direction = EventMode.DEFAULT) => {
     if (direction === EventMode.DEFAULT) {
+      this.#formComponent.updateElement(this.#event);
       replace(this.#formComponent, this.#eventComponent);
     } else {
       replace(this.#eventComponent, this.#formComponent);
@@ -78,9 +73,5 @@ export default class EventPresenter {
 
   #favoriteClickHandler = () => {
     this.#onEventChangeCallback?.({ ...this.#event, isFavorite: !this.#event.isFavorite });
-  };
-
-  #offerClickHandler = (updatedEvent) => {
-    this.#onOfferClickCallback?.(updatedEvent);
   };
 }

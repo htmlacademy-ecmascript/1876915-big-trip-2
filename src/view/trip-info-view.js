@@ -2,12 +2,12 @@ import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
 import { DateFormat, TripTitleQuantity } from '../const';
 
-const createTripTittle = (events, lastEvent, length) => {
+const createTripTittle = (events, lastEvent, length, destinations) => {
   if (length > TripTitleQuantity.MAX) {
-    return `${events[0].destination.name} &mdash; ... &mdash; ${lastEvent.destination.name}`;
+    return `${destinations.get(events[0].destinationId).name} &mdash; ... &mdash; ${destinations.get(lastEvent.destinationId).name}`;
   }
 
-  return events.map(({ destination: { name } }) => name).join(' &mdash; ');
+  return events.map(({ destinationId: { name } }) => name).join(' &mdash; ');
 };
 
 const createTripDate = (events, lastEvent, length) => {
@@ -24,7 +24,7 @@ const createTripDate = (events, lastEvent, length) => {
   return date;
 };
 
-const createTripInfoTemplate = (events) => {
+const createTripInfoTemplate = (events, destinations) => {
   const length = events.length;
 
   if (length === 0) {
@@ -33,7 +33,7 @@ const createTripInfoTemplate = (events) => {
 
   const lastEvent = events[length - 1];
 
-  const title = createTripTittle(events, lastEvent, length);
+  const title = createTripTittle(events, lastEvent, length, destinations);
   const date = createTripDate(events, lastEvent, length);
   const price = events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0);
 
@@ -53,15 +53,17 @@ const createTripInfoTemplate = (events) => {
 };
 
 export default class TripInfoView extends AbstractView {
-  #events = null;
+  #events = [];
+  #destinations = null;
 
-  constructor(events) {
+  constructor(events, destinations) {
     super();
     this.#events = events;
+    this.#destinations = destinations;
   }
 
   get template() {
-    return createTripInfoTemplate(this.#events);
+    return createTripInfoTemplate(this.#events, this.#destinations);
   }
 }
 

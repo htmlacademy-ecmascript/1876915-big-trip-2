@@ -28,7 +28,7 @@ export default class HeaderPresenter {
     this.#events = sortEvents(this.#tripModel.events, SortType.DAY);
 
     if (this.#events.length !== 0) {
-      this.#tripInfo = new TripInfoView(this.#events);
+      this.#tripInfo = new TripInfoView(this.#events, this.#tripModel.destinations);
       render(this.#headerContainer, this.#tripInfo, RenderPosition.AFTERBEGIN);
     }
     this.#filters = new FilterView(this.#tripModel.filters, this.#tripModel.filterType);

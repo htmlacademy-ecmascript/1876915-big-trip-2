@@ -12,18 +12,19 @@ const createOfferListTemplate = (offers) => (
     </li>`)).join('')}`
 );
 
-const createEventTemplate = (event) => {
+const createEventTemplate = (event, offerList, destinations) => {
   const {
     id,
     basePrice,
-    destination: { name },
+    destinationId,
     dateFrom,
     dateTo,
     isFavorite,
-    offers,
+    offerIds,
     type,
   } = event || {};
 
+  const offers = offerList.get(type).filter((offer) => offerIds.includes(offer.id));
   const date = dayjs(dateFrom).format(DateFormat.EVENT_DEFAULT);
   const dateHuman = dayjs(dateFrom).format(DateFormat.EVENT_HUMAN);
 
@@ -33,7 +34,7 @@ const createEventTemplate = (event) => {
   const timeStart = start.format(DateFormat.EVENT_TIME);
   const timeEnd = end.format(DateFormat.EVENT_TIME);
 
-  const eventTitle = `${type} ${name}`;
+  const eventTitle = `${type} ${destinations.get(destinationId).name}`;
   const eventClass = isFavorite ? 'event__favorite-btn--active' : '';
 
   return (`
@@ -76,14 +77,18 @@ const createEventTemplate = (event) => {
 
 export default class EventView extends AbstractView {
   #event = null;
+  #offers = null;
+  #destinations = null;
 
-  constructor(event) {
+  constructor(event, offers, destinations) {
     super();
     this.#event = event;
+    this.#offers = offers;
+    this.#destinations = destinations;
   }
 
   get template() {
-    return createEventTemplate(this.#event);
+    return createEventTemplate(this.#event, this.#offers, this.#destinations);
   }
 
   setOnFavoriteClickHandler = (callback) => {

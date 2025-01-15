@@ -18,8 +18,8 @@ export default class BoardPresenter {
 
   /** @type {TripEvent[]} */
   #events = [];
-  #destinations = [];
-  #offerTypes = [];
+  #destinations = null;
+  #offers = null;
 
   /** @type {TripModel} */
   #tripModel = null;
@@ -36,8 +36,8 @@ export default class BoardPresenter {
 
   init() {
     this.#events = filterEvents([...this.#tripModel.events], this.#tripModel.filterType);
-    this.#destinations = [...this.#tripModel.destinations];
-    this.#offerTypes = [...this.#tripModel.offerTypes];
+    this.#destinations = this.#tripModel.destinations;
+    this.#offers = this.#tripModel.offers;
 
     this.#renderBoard();
   }
@@ -72,7 +72,7 @@ export default class BoardPresenter {
   #renderEvents = () => sortEvents(this.#events, this.#activeSortType)
     .forEach((event) => {
       const presenter = new EventPresenter(this.#eventListComponent.element);
-      presenter.init(event, this.#destinations, this.#offerTypes);
+      presenter.init(event, this.#offers, this.#destinations);
       presenter.setOnFormSubmitHandler(this.#formSubmitHandler);
       presenter.setOnDataChangeHandler(this.#eventChangeHandler);
 
@@ -96,7 +96,7 @@ export default class BoardPresenter {
 
   #eventChangeHandler = (updatedEvent) => {
     this.#events = updateItem(this.#events, updatedEvent);
-    this.#eventPresenters.get(updatedEvent.id).init(updatedEvent);
+    this.#eventPresenters.get(updatedEvent.id).init(updatedEvent, this.#offers, this.#destinations);
   };
 
   #toggleEventMode = (newEventId = '') => {
