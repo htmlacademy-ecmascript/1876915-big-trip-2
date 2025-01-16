@@ -7,30 +7,27 @@ import { capitalizeFirstLetter } from '../utils/event';
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 
-const createEventTypeItemTemplate = (eventType, offers) => {
-  let list = '';
-  for (const type of offers.keys()) {
+const createTypeItemTemplate = (eventType, offers) => offers.keys()
+  .reduce((accumulator, type) => {
     const checkStatus = eventType === type ? 'checked' : '';
-    list += (`
+
+    return `${accumulator}
       <div class="event__type-item" data-event-type="${type}">
         <input id="event-type-${type}" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${type}" ${checkStatus}>
         <label class="event__type-label  event__type-label--${type}" for="event-type-${type}">${capitalizeFirstLetter(type)}</label>
-      </div>`);
-  }
+      </div>`;
+  }, '');
 
-  return list;
-};
-
-const createEventTypeListTemplate = (eventType, offers) => (`
+const createTypePickerTemplate = (eventType, offers) => (`
   <div class="event__type-list">
     <fieldset class="event__type-group">
       <legend class="visually-hidden">Event type</legend>
-        ${createEventTypeItemTemplate(eventType, offers)}
+        ${createTypeItemTemplate(eventType, offers)}
     </fieldset>
   </div>`
 );
 
-const createOfferListItemTemplate = (offers, offerIds) => offers.map(({ id, title, price }) => {
+const createOfferItemTemplate = (offers, offerIds) => offers.map(({ id, title, price }) => {
   const checkStatus = offerIds.some((offerId) => offerId === id) ? 'checked' : '';
 
   return (`
@@ -45,28 +42,32 @@ const createOfferListItemTemplate = (offers, offerIds) => offers.map(({ id, titl
     </div>`);
 }).join('');
 
-const createOfferListTemplate = (offers, offerIds) => (`
+const createOffersTemplate = (offers, offerIds, type) => {
+  const eventOffers = offers.get(type);
+  if (!eventOffers.length) {
+    return '';
+  }
+
+  return (`
     <section class="event__section  event__section--offers">
       <h3 class="event__section-title  event__section-title--offers">Offers</h3>
       <div class="event__available-offers">
-        ${createOfferListItemTemplate(offers, offerIds)}
+        ${createOfferItemTemplate(offers.get(type), offerIds)}
       </div>
     </section>`
-);
+  );
+};
 
-const createDestinationListTemplate = (type, destination, destinations = []) => {
+const createDestinationPickerTemplate = (type, destination, destinations = []) => {
   const listId = nanoid();
-  let list = '';
-  for (const { name } of destinations.values()) {
-    list += `<option value="${name}"></option>`;
-  }
+  const optionString = destinations.values().reduce((accumulator, { name }) => `${accumulator}<option value="${name}"></option>`, '');
 
   return (`
     <div div class="event__field-group  event__field-group--destination" >
       <label class="event__label  event__type-output" for="event-destination-${destination.id}">${type}</label>
       <input class="event__input  event__input--destination" id="event-destination-${destination.id}" type="text" name="event-destination" value="${destination ? destination.name : ''}" list="destination-list-${listId}">
       <datalist id="destination-list-${listId}">
-          ${list}
+          ${optionString}
       </datalist>
     </div>`
   );
@@ -74,7 +75,13 @@ const createDestinationListTemplate = (type, destination, destinations = []) => 
 
 const createPicturesTemplate = (pictures = []) => pictures.map(({ src, description }) => `<img class="event__photo" src="${src}" alt="${description}">`).join('');
 
-const createDestinationTemplate = ({ description, pictures }) => (`
+const createDestinationsTemplate = ({ id, description, pictures }) => {
+  const isRenderNeed = id && (pictures.length || description);
+  if (!isRenderNeed) {
+    return '';
+  }
+
+  return (`
     <section class="event__section  event__section--destination">
       <h3 class="event__section-title  event__section-title--destination">Destination</h3>
       ${description ? `<p class="event__destination-description">${description}</p>` : ''}
@@ -84,7 +91,8 @@ const createDestinationTemplate = ({ description, pictures }) => (`
         </div>
       </div>` : ''}
     </section>`
-);
+  );
+};
 
 const createEventTimeTemplate = (dateStart, dateEnd) => {
   const id = nanoid();
@@ -100,7 +108,8 @@ const createEventTimeTemplate = (dateStart, dateEnd) => {
   );
 };
 
-const createEventPriceTemplate = (price) => {
+const createEventPriceTemplate = (basePrice) => {
+  const price = (basePrice > 0) ? basePrice : '';
   const id = nanoid();
 
   return (`
@@ -125,23 +134,18 @@ const createFormTemplate = (event, destinations, offers, mode) => {
     type,
   } = event || {};
 
-  const destination = destinations.get(destinationId);
-  const eventOffers = offers.get(type);
-
-  const exitButtonText = mode === FormType.EDIT ? ButtonText.DELETE : ButtonText.CANCEL;
-  const submitButtonText = ButtonText.SAVE;
-  const eventTypeListTemplate = createEventTypeListTemplate(type, offers);
-  const destinationListTemplate = createDestinationListTemplate(type, destination, destinations);
-
-  const offerDetailsListTemplate = (eventOffers.length > 0) ? createOfferListTemplate(offers.get(type), offerIds) : '';
-  const destinationTemplate = destinationId && (destination.pictures.length || destination.description) ? createDestinationTemplate(destination) : '';
-
-  const dateStart = dayjs(dateFrom).format(DateFormat.FORM_START);
   const dateEnd = dayjs(dateTo).format(DateFormat.FORM_START);
-  const price = (basePrice > 0) ? basePrice : '';
+  const dateStart = dayjs(dateFrom).format(DateFormat.FORM_START);
+  const destination = destinations.get(destinationId);
+  const exitButtonText = (mode === FormType.EDIT) ? ButtonText.DELETE : ButtonText.CANCEL;
+  const submitButtonText = ButtonText.SAVE;
 
+  const typePickerTemplate = createTypePickerTemplate(type, offers);
+  const destinationPickerTemplate = createDestinationPickerTemplate(type, destination, destinations);
+  const offersTemplate = createOffersTemplate(offers, offerIds, type);
+  const destinationsTemplate = createDestinationsTemplate(destination);
   const eventTimeTemplate = createEventTimeTemplate(dateStart, dateEnd);
-  const eventPriceTemplate = createEventPriceTemplate(price);
+  const eventPriceTemplate = createEventPriceTemplate(basePrice);
 
   return (`
     <li class="trip-events__item" data-event-id = ${id}>
@@ -153,10 +157,10 @@ const createFormTemplate = (event, destinations, offers, mode) => {
               <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
             </label>
             <input class="event__type-toggle  visually-hidden" id="event-type-toggle-${id}" type="checkbox">
-            ${eventTypeListTemplate}
+            ${typePickerTemplate}
           </div>
 
-          ${destinationListTemplate}
+          ${destinationPickerTemplate}
           ${eventTimeTemplate}
           ${eventPriceTemplate}
 
@@ -167,10 +171,10 @@ const createFormTemplate = (event, destinations, offers, mode) => {
           </button>
         </header>
 
-        ${(destinationTemplate || offerDetailsListTemplate) ? `
+        ${(destinationsTemplate || offersTemplate) ? `
           <section class="event__details">
-            ${offerDetailsListTemplate}
-            ${destinationTemplate}
+            ${offersTemplate}
+            ${destinationsTemplate}
           </section>` : ''}
       </form>
     </li>`
@@ -318,16 +322,19 @@ export default class FormView extends AbstractStatefulView {
     this.#saveButton.disabled = false;
   };
 
-  #dateFromChangeHandler = ([date]) => {
-    this._setState({ dateFrom: new Date(date).toISOString() });
+  #datePickerFromCloseHandler = ([date]) => {
+    const dateFrom = new Date(date).toISOString();
+    this.#datePickerTo.set('minDate', dateFrom);
+    this._setState({ dateFrom });
   };
 
-  #dateToChangeHandler = ([date]) => {
-    this._setState({ dateTo: new Date(date).toISOString() });
+  #datePickerToCloseHandler = ([date]) => {
+    const dateTo = new Date(date).toISOString();
+    this.#datePickerFrom.set('maxDate', dateTo);
+    this._setState({ dateTo });
   };
 
   #initDatepicker = () => {
-
     const [inputFrom, inputTo] = this.element.querySelectorAll('.event__input--time');
     const config = {
       allowInput: false,
@@ -340,7 +347,6 @@ export default class FormView extends AbstractStatefulView {
       },
       'time_24hr': true,
       onOpen: this.#datePickerOpenHandler,
-      onClose: this.#datePickerCloseHandler,
     };
 
     this.#datePickerFrom = flatpickr(
@@ -349,20 +355,22 @@ export default class FormView extends AbstractStatefulView {
         ...config,
         defaultDate: this._state.dateFrom,
         maxDate: this._state.dateTo,
-        onChange: this.#dateFromChangeHandler,
+        onClose: [this.#datePickerFromCloseHandler],
       },
     );
 
-    this.#datePickerFrom = flatpickr(
+    this.#datePickerTo = flatpickr(
       inputTo,
       {
         ...config,
         defaultDate: this._state.dateTo,
         minDate: this._state.dateFrom,
-        onChange: this.#dateToChangeHandler,
+        onClose: [this.#datePickerToCloseHandler],
       },
     );
 
+    this.#datePickerTo.config.onClose.push(this.#datePickerCloseHandler);
+    this.#datePickerFrom.config.onClose.push(this.#datePickerCloseHandler);
   };
 }
 
