@@ -14,8 +14,8 @@ export default class AbstractView {
   /** @type {HTMLElement|null} Элемент представления */
   #element = null;
 
-  /** @type {Map<HTMLElement, [[string, Function]]>} {key:element, value: [[eventType, eventHandler], ...]}*/
-  #eventList = new Map();
+  /**@type {AbortController} */
+  #controller = new AbortController();
 
   constructor() {
     if (new.target === AbstractView) {
@@ -86,27 +86,12 @@ export default class AbstractView {
       callback(evt);
     };
 
-    const elementHandlers = this.#eventList.get(element) || [];
-    const isHandlerExist = elementHandlers.some(([type, handler]) => (type === eventType) && (handler === callback));
-
-    if (!isHandlerExist) {
-      elementHandlers.push([eventType, callback]);
-      this.#eventList.set(element, elementHandlers);
-      element.addEventListener(eventType, eventHandler, eventOptions);
-    }
-  };
-
-  /** Метод для удаления обработчиков событий элемента */
-  removeEventListeners = () => {
-    for (const [elementSelector, handlers] of this.#eventList.entries()) {
-      handlers.forEach(([eventType, eventHandler]) => elementSelector.removeEventListener(eventType, eventHandler));
-    }
-    this.#eventList.clear();
+    element.addEventListener(eventType, eventHandler, { ...eventOptions, signal: this.#controller.signal });
   };
 
   /** Метод для удаления элемента */
   removeElement() {
-    this.removeEventListeners();
+    this.#controller.abort(); // Метод для удаления обработчиков событий элемента
     this.#element = null;
   }
 

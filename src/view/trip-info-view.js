@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import AbstractView from '../framework/view/abstract-view';
 import { DateFormat, TripTitleQuantity } from '../const';
 
-const createTripTittle = (events, lastEvent, length, destinations) => {
+const createTripTitle = (events, lastEvent, length, destinations) => {
   if (length > TripTitleQuantity.MAX) {
     return `${destinations.get(events[0].destinationId).name} &mdash; ... &mdash; ${destinations.get(lastEvent.destinationId).name}`;
   }
@@ -33,7 +33,7 @@ const createTripInfoTemplate = (events, destinations) => {
 
   const lastEvent = events[length - 1];
 
-  const title = createTripTittle(events, lastEvent, length, destinations);
+  const title = createTripTitle(events, lastEvent, length, destinations);
   const date = createTripDate(events, lastEvent, length);
   const price = events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0);
 

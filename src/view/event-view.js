@@ -12,7 +12,7 @@ const createOfferListTemplate = (offers) => (
     </li>`)).join('')}`
 );
 
-const createEventTemplate = (event, offerList, destinations) => {
+const createEventTemplate = (event, offers, destinations) => {
   const {
     id,
     basePrice,
@@ -24,7 +24,7 @@ const createEventTemplate = (event, offerList, destinations) => {
     type,
   } = event || {};
 
-  const offers = offerList.get(type).filter((offer) => offerIds.includes(offer.id));
+  const eventOffers = offers.get(type).filter((offer) => offerIds.includes(offer.id));
   const date = dayjs(dateFrom).format(DateFormat.EVENT_DEFAULT);
   const dateHuman = dayjs(dateFrom).format(DateFormat.EVENT_HUMAN);
 
@@ -56,10 +56,10 @@ const createEventTemplate = (event, offerList, destinations) => {
         <p class="event__price">
           &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
         </p>
-        ${(offers.length > 0) ? `
+        ${(eventOffers.length > 0) ? `
           <h4 class="visually-hidden">Offers:</h4>
           <ul class="event__selected-offers">
-            ${createOfferListTemplate(offers)}
+            ${createOfferListTemplate(eventOffers)}
           </ul>` : ''}
         <button class="event__favorite-btn ${eventClass}" type="button">
           <span class="visually-hidden">Add to favorite</span>
