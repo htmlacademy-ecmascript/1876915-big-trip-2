@@ -222,6 +222,10 @@ export default class FormView extends AbstractStatefulView {
     this.#enableSaveButton();
   };
 
+  resetForm = (event) => {
+    this._setState(event);
+  };
+
   removeElement() {
     super.removeElement();
     if (this.#datePickerFrom) {

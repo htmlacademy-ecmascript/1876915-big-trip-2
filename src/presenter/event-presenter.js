@@ -1,4 +1,4 @@
-import { EventMode } from '../const';
+import { EventMode, UpdateType, UserAction } from '../const';
 import { remove, render, replace } from '../framework/render';
 import EventView from '../view/event-view';
 import FormView from '../view/form-view';
@@ -68,10 +68,14 @@ export default class EventPresenter {
   };
 
   #formSubmitHandler = (updatedEvent) => {
-    this.#onFormSubmitCallback?.(updatedEvent);
+    this.#onFormSubmitCallback?.(UserAction.UPDATE_EVENT, UpdateType.MINOR, updatedEvent);
   };
 
   #favoriteClickHandler = () => {
-    this.#onEventChangeCallback?.({ ...this.#event, isFavorite: !this.#event.isFavorite });
+    this.#onEventChangeCallback?.(
+      UserAction.UPDATE_EVENT,
+      UpdateType.PATCH,
+      { ...this.#event, isFavorite: !this.#event.isFavorite }
+    );
   };
 }

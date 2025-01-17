@@ -1,5 +1,5 @@
 import { sortEvents } from '../utils/sort';
-import { ElementSelectors as E, EventListMessage, EventMode, KeyCode, SortType } from '../const';
+import { ElementSelectors as E, EventListMessage, EventMode, KeyCode, SortType, UpdateType, UserAction } from '../const';
 import SortView from '../view/sort-view';
 import EventListView from '../view/event-list-view';
 import NoEventsView from '../view/no-events-view';
@@ -7,7 +7,6 @@ import NewEventButtonView from '../view/new-event-button-view';
 import { filterEvents } from '../utils/filter';
 import EventPresenter from './event-presenter';
 import { render } from '../framework/render';
-import { updateItem } from '../utils/common';
 
 export default class BoardPresenter {
   #boardContainer = null;
@@ -30,14 +29,15 @@ export default class BoardPresenter {
 
   constructor(boardContainer, newEventButtonContainer, tripModel) {
     this.#boardContainer = boardContainer;
-    this.#tripModel = tripModel;
     this.#newEventButtonContainer = newEventButtonContainer;
+    this.#tripModel = tripModel;
+    this.#tripModel.addObserver(this.#modelEventHandler);
   }
 
   init() {
-    this.#events = filterEvents([...this.#tripModel.events], this.#tripModel.filterType);
-    this.#destinations = this.#tripModel.destinations;
     this.#offers = this.#tripModel.offers;
+    this.#events = filterEvents(this.#tripModel.events, this.#tripModel.filterType);
+    this.#destinations = this.#tripModel.destinations;
 
     this.#renderBoard();
   }
@@ -73,8 +73,8 @@ export default class BoardPresenter {
     .forEach((event) => {
       const presenter = new EventPresenter(this.#eventListComponent.element);
       presenter.init(event, this.#offers, this.#destinations);
-      presenter.setOnFormSubmitHandler(this.#formSubmitHandler);
-      presenter.setOnDataChangeHandler(this.#eventChangeHandler);
+      presenter.setOnFormSubmitHandler(this.#viewActionHandler);
+      presenter.setOnDataChangeHandler(this.#viewActionHandler);
 
       this.#eventPresenters.set(event.id, presenter);
     });
@@ -94,9 +94,55 @@ export default class BoardPresenter {
     this.#renderEvents();
   };
 
+  #viewActionHandler = (actionType, updateType, updatedEvent) => {
+    console.log(actionType, updateType, updatedEvent);
+
+    switch (actionType) {
+      case UserAction.UPDATE_EVENT:
+        this.#tripModel.updateEvent(updateType, updatedEvent);
+        break;
+      case UserAction.CREATE_EVENT:
+        this.#tripModel.createEvent(updateType, updatedEvent);
+        break;
+      case UserAction.DELETE_EVENT:
+        this.#tripModel.deleteEvent(updateType, updatedEvent);
+        break;
+    }
+  };
+
+  #modelEventHandler = (updateType, updatedEvent) => {
+    console.log(updateType, updatedEvent);
+
+    switch (updateType) {
+      case UpdateType.PATCH:
+        // - обновить часть списка (например, когда поменялось описание)
+        this.#eventPresenters.get(updatedEvent.id).init(updatedEvent, this.#offers, this.#destinations);
+        break;
+      case UpdateType.MINOR:
+        this.#eventPresenters.get(updatedEvent.id).init(updatedEvent, this.#offers, this.#destinations);
+        this.#toggleEventMode(updatedEvent.id);
+        // - обновить список (например, когда задача ушла в архив)
+        break;
+      case UpdateType.MAJOR:
+        // - обновить всю доску (например, при переключении фильтра)
+        break;
+
+      default:
+        return;
+    }
+
+    this.#events = filterEvents(this.#tripModel.events, this.#tripModel.filterType);
+  };
+
   #eventChangeHandler = (updatedEvent) => {
-    this.#events = updateItem(this.#events, updatedEvent);
+    //!!! update model
+    // this.#events = updateItem(this.#events, updatedEvent);
     this.#eventPresenters.get(updatedEvent.id).init(updatedEvent, this.#offers, this.#destinations);
+  };
+
+  #formSubmitHandler = (updatedEvent) => {
+    this.#viewActionHandler(updatedEvent);
+    this.#toggleEventMode(updatedEvent.id);
   };
 
   #toggleEventMode = (newEventId = '') => {
@@ -116,11 +162,6 @@ export default class BoardPresenter {
     if ((evt.key === KeyCode.ESC) && (this.#activeEventId)) {
       this.#toggleEventMode();
     }
-  };
-
-  #formSubmitHandler = (updatedEvent) => {
-    this.#eventChangeHandler(updatedEvent);
-    this.#toggleEventMode(updatedEvent.id);
   };
 
   #eventToggleHandler = ({ target }) => {

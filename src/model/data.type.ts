@@ -23,7 +23,7 @@ type Offer = {
   isChecked: boolean;
 }
 
-type OfferList = [
+type Offers = [
   {
     type: EventType;
     offers: Offer[];
@@ -46,8 +46,8 @@ type TripEvent = {
   basePrice: number;
   dateFrom: string;
   dateTo: string;
-  destination: Destination;
+  destinationId: Id;
   isFavorite: boolean;
-  offers: Offer[];
+  offerIds: Id[];
   type: EventType;
 };

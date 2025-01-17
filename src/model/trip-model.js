@@ -1,16 +1,18 @@
+import Observable from '../framework/observable';
 import { createFilters } from '../utils/filter';
 import { createSortItems } from '../utils/sort';
 import { generateTripData } from '../../mocks/generate-data';
 import { FilterType, tripDefault } from '../const';
+import { nanoid } from 'nanoid';
 
-export default class TripModel {
-  #events = [];
+export default class TripModel extends Observable {
+  #events = new Map();
   #destinations = new Map();
   #offers = new Map();
   #filterType = FilterType.EVERYTHING;
 
   get events() {
-    return this.#events;
+    return Array.from(this.#events.values());
   }
 
   get destinations() {
@@ -22,11 +24,11 @@ export default class TripModel {
   }
 
   get filters() {
-    return createFilters(this.#events);
+    return createFilters(this.events);
   }
 
   get sortItems() {
-    return createSortItems(this.#events);
+    return createSortItems(this.events);
   }
 
   get filterType() {
@@ -49,7 +51,9 @@ export default class TripModel {
   init() {
     const [rawEvents, rawOffers, rawDestinations] = generateTripData();
 
-    this.#events = rawEvents;
+    rawEvents.forEach((event) => {
+      this.#events.set(event.id, event);
+    });
 
     rawOffers.forEach(({ type, offers }) => {
       this.#offers.set(type, offers);
@@ -59,4 +63,31 @@ export default class TripModel {
       this.#destinations.set(destination.id, destination);
     });
   }
+
+  #checkEventExistence = (id) => {
+    if (this.#events.has(id)) {
+      return;
+    }
+
+    throw new Error(`Event with id: ${id} doesn't exist`);
+  };
+
+  createEvent = (updateType, event) => {
+    //remove nanoid, when using api
+    this.#events.set({ ...event, id: nanoid() });
+    this._notify(updateType, event);
+  };
+
+  updateEvent = (updateType, event) => {
+    this.#checkEventExistence(event.id);
+    this.#events.set(event.id, event);
+    this._notify(updateType, event);
+  };
+
+  deleteEvent = (updateType, event) => {
+    this.#checkEventExistence(event.id);
+    this.#events.delete(event.id);
+    this._notify(updateType);
+  };
+
 }

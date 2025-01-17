@@ -72,3 +72,15 @@ export const TripTitleQuantity = {
   MIN: 1,
   MAX: 3,
 };
+
+export const UserAction = {
+  UPDATE_EVENT: 'UPDATE_EVENT',
+  CREATE_EVENT: 'CREATE_EVENT',
+  DELETE_EVENT: 'DELETE_EVENT',
+};
+
+export const UpdateType = {
+  PATCH: 'PATCH',
+  MINOR: 'MINOR',
+  MAJOR: 'MAJOR',
+};
