@@ -11,6 +11,11 @@ export const DateFormat = {
 
 export const EventMode = {
   DEFAULT: 'default',
+  FORM: 'form',
+};
+
+export const FormMode = {
+  CREATE: 'create',
   EDIT: 'edit',
 };
 
@@ -36,11 +41,6 @@ export const SortType = {
   OFFER: 'offers',
 };
 
-export const FormType = {
-  CREATE: 'create',
-  EDIT: 'edit',
-};
-
 export const KeyCode = {
   ESC: 'Escape',
   ENTER: 'Enter',
@@ -48,9 +48,8 @@ export const KeyCode = {
 
 export const tripDefault = {
   basePrice: 0,
-  destination: null,
   isFavorite: false,
-  offers: [],
+  offerIds: [],
   type: 'flight',
 };
 
@@ -75,6 +74,7 @@ export const TripTitleQuantity = {
 
 export const UserAction = {
   UPDATE_EVENT: 'UPDATE_EVENT',
+  CANCEL_EVENT: 'CANCEL_EVENT',
   CREATE_EVENT: 'CREATE_EVENT',
   DELETE_EVENT: 'DELETE_EVENT',
 };
@@ -83,4 +83,12 @@ export const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
+  FILTER: 'FILTER',
+};
+
+export const Method = {
+  GET: 'GET',
+  PUT: 'PUT',
+  POST: 'POST',
+  DELETE: 'DELETE',
 };

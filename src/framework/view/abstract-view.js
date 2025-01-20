@@ -15,7 +15,7 @@ export default class AbstractView {
   #element = null;
 
   /**@type {AbortController} */
-  #controller = new AbortController();
+  #controller = null;
 
   constructor() {
     if (new.target === AbstractView) {
@@ -30,6 +30,10 @@ export default class AbstractView {
   get element() {
     if (!this.#element) {
       this.#element = createElement(this.template);
+    }
+
+    if (!this.#controller) {
+      this.#controller = new AbortController();
     }
 
     return this.#element;
@@ -92,6 +96,7 @@ export default class AbstractView {
   /** Метод для удаления элемента */
   removeElement() {
     this.#controller.abort(); // Метод для удаления обработчиков событий элемента
+    this.#controller = null;
     this.#element = null;
   }
 

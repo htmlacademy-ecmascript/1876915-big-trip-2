@@ -1,22 +1,16 @@
 import { ButtonText } from '../const';
 import AbstractView from '../framework/view/abstract-view';
 
-const createButtonTemplate = (isDisabled) => (`
-  <button class="trip-main__event-add-btn  btn  btn--big  btn--yellow" type="button" ${isDisabled ? 'disabled' : ''}>
+const createButtonTemplate = () => (`
+  <button class="trip-main__event-add-btn  btn  btn--big  btn--yellow" type="button">
     ${ButtonText.CREATE}
   </button>
  `);
 
 export default class NewEventButtonView extends AbstractView {
-  #isDisabled;
-
-  constructor(isDisabled = false) {
-    super();
-    this.#isDisabled = isDisabled;
-  }
 
   get template() {
-    return createButtonTemplate(this.#isDisabled);
+    return createButtonTemplate();
   }
 
   disable() {
@@ -26,4 +20,9 @@ export default class NewEventButtonView extends AbstractView {
   enable() {
     this.element.disabled = false;
   }
+
+  setOnClickHandler = (callback) => {
+    this.createEventListener(this.element, 'click', callback);
+    return this;
+  };
 }

@@ -34,7 +34,7 @@ const createEventTemplate = (event, offers, destinations) => {
   const timeStart = start.format(DateFormat.EVENT_TIME);
   const timeEnd = end.format(DateFormat.EVENT_TIME);
 
-  const eventTitle = `${type} ${destinations.get(destinationId).name}`;
+  const eventTitle = `${type} ${destinations.get(destinationId)?.name || ''}`;
   const eventClass = isFavorite ? 'event__favorite-btn--active' : '';
 
   return (`
@@ -93,5 +93,6 @@ export default class EventView extends AbstractView {
 
   setOnFavoriteClickHandler = (callback) => {
     this.createEventListener('.event__favorite-btn', 'click', callback);
+    return this;
   };
 }

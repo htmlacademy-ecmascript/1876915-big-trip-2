@@ -7,7 +7,7 @@ const createTripTitle = (events, lastEvent, length, destinations) => {
     return `${destinations.get(events[0].destinationId).name} &mdash; ... &mdash; ${destinations.get(lastEvent.destinationId).name}`;
   }
 
-  return events.map(({ destinationId: { name } }) => name).join(' &mdash; ');
+  return events.map(({ destinationId }) => destinations.get(destinationId).name).join(' &mdash; ');
 };
 
 const createTripDate = (events, lastEvent, length) => {
@@ -35,7 +35,7 @@ const createTripInfoTemplate = (events, destinations) => {
 
   const title = createTripTitle(events, lastEvent, length, destinations);
   const date = createTripDate(events, lastEvent, length);
-  const price = events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0);
+  const price = events.reduce((accumulator, { basePrice }) => accumulator + +basePrice, 0);
 
   return (`
     <section class="trip-main__trip-info  trip-info">

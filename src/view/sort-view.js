@@ -39,6 +39,7 @@ export default class SortView extends AbstractView {
 
   setOnSortClickHandler = (callback) => {
     this.#onSortClickHandler = callback;
+    return this;
   };
 
   #sortClickHandler = (evt) => {
