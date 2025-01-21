@@ -2,7 +2,7 @@ import { ButtonText } from '../const';
 import AbstractView from '../framework/view/abstract-view';
 
 const createButtonTemplate = () => (`
-  <button class="trip-main__event-add-btn  btn  btn--big  btn--yellow" type="button">
+  <button class="trip-main__event-add-btn  btn  btn--big  btn--yellow" type="button" disabled>
     ${ButtonText.CREATE}
   </button>
  `);

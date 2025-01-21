@@ -7,8 +7,8 @@ import { remove, render, RenderPosition, replace } from '../framework/render';
 export default class HeaderPresenter {
   #headerContainer = null;
   #filterContainer = null;
-  #tripInfo = null;
-  #filters = null;
+  #tripInfoComponent = null;
+  #filtersComponent = null;
 
   /** @type {TripModel} */
   #tripModel = null;
@@ -31,40 +31,40 @@ export default class HeaderPresenter {
 
   #renderTripInfo = () => {
 
-    if (this.#tripInfo && (this.#tripModel.eventsSize === 0)) {
-      remove(this.#tripInfo);
-      this.#tripInfo = null;
+    if (this.#tripInfoComponent && (this.#tripModel.eventsSize === 0)) {
+      remove(this.#tripInfoComponent);
+      this.#tripInfoComponent = null;
       return;
     }
 
     if (this.#tripModel.eventsSize !== 0) {
-      const prevComponent = this.#tripInfo;
-      this.#tripInfo = new TripInfoView(this.#events, this.#tripModel.destinations);
+      const prevComponent = this.#tripInfoComponent;
+      this.#tripInfoComponent = new TripInfoView(this.#events, this.#tripModel.offers, this.#tripModel.destinations);
 
       if (!prevComponent) {
-        render(this.#headerContainer, this.#tripInfo, RenderPosition.AFTERBEGIN);
+        render(this.#headerContainer, this.#tripInfoComponent, RenderPosition.AFTERBEGIN);
       } else {
-        replace(prevComponent, this.#tripInfo);
+        replace(prevComponent, this.#tripInfoComponent);
         remove(prevComponent);
       }
     }
   };
 
   #renderFilters = () => {
-    const prevComponent = this.#filters;
-    this.#filters = new FilterView(this.#tripModel.filters, this.#tripModel.filterType).setOnFilterChangeHandler(this.#onFilterChangeHandler);
+    const prevComponent = this.#filtersComponent;
+    this.#filtersComponent = new FilterView(this.#tripModel.filters, this.#tripModel.filterType).setOnFilterChangeHandler(this.#onFilterChangeHandler);
 
     if (!prevComponent) {
-      render(this.#filterContainer, this.#filters);
+      render(this.#filterContainer, this.#filtersComponent);
       return;
     }
 
-    replace(prevComponent, this.#filters);
+    replace(prevComponent, this.#filtersComponent);
     remove(prevComponent);
   };
 
   #onModelChangeHandler = (updateType) => {
-    if ((updateType === UpdateType.MINOR) || (updateType === UpdateType.MAJOR)) {
+    if ((updateType !== UpdateType.PATCH) && (updateType !== UpdateType.FILTER)) {
       this.init();
     }
   };

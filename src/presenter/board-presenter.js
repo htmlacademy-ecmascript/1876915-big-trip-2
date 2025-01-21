@@ -19,10 +19,7 @@ export default class BoardPresenter {
 
   /** @type {TripEvent[]} */
   #events = [];
-  /** @type {Offers} */
-  #offers = null;
-  /** @type {Destination} */
-  #destinations = null;
+
   /** @type {TripModel} */
   #tripModel = null;
 
@@ -31,6 +28,8 @@ export default class BoardPresenter {
   #activeEventId = '';
   #newEventPresenter = null;
 
+  #isLoading = true;
+
   constructor(boardContainer, newEventButtonContainer, tripModel) {
     this.#boardContainer = boardContainer;
     this.#newEventButtonContainer = newEventButtonContainer;
@@ -38,10 +37,15 @@ export default class BoardPresenter {
     this.#tripModel.addObserver(this.#onModelChangeHandler);
   }
 
+  get #offers() {
+    return this.#tripModel.offers;
+  }
+
+  get #destinations() {
+    return this.#tripModel.destinations;
+  }
+
   init() {
-    this.#offers = this.#tripModel.offers;
-    this.#events = filterEvents(this.#tripModel.events, this.#tripModel.filterType);
-    this.#destinations = this.#tripModel.destinations;
 
     this.#newEventButtonComponent.setOnClickHandler(this.#newEventHandler);
     render(this.#newEventButtonContainer, this.#newEventButtonComponent);
@@ -50,7 +54,8 @@ export default class BoardPresenter {
   }
 
   #renderBoard = () => {
-    if (this.#events.length === 0) {
+
+    if ((this.#events.length === 0) || (this.#isLoading)) {
       this.#renderNoEvents();
       return;
     }
@@ -61,7 +66,8 @@ export default class BoardPresenter {
   };
 
   #renderNoEvents = () => {
-    this.#noEventsComponent = new NoEventsView(EventListMessage[this.#tripModel.filterType]);
+    const message = this.#isLoading ? EventListMessage.LOADING : EventListMessage[this.#tripModel.filterType];
+    this.#noEventsComponent = new NoEventsView(message);
     render(this.#boardContainer, this.#noEventsComponent);
   };
 
@@ -101,8 +107,8 @@ export default class BoardPresenter {
     this.#tripModel.updateFilterType(UpdateType.MAJOR, FilterType.EVERYTHING);
     this.#newEventButtonComponent.disable();
     if (this.#events.length === 0) {
-      remove(this.#noEventsComponent);//!!!
-      this.#renderEventList();//!!! не удалять EventList
+      remove(this.#noEventsComponent);
+      this.#renderEventList();//!!! не удалять EventList??
     }
     this.#newEventPresenter = this.#createEventPresenter(this.#tripModel.getDefaultEvent(), FormMode.CREATE);
   };
@@ -146,6 +152,7 @@ export default class BoardPresenter {
       case UserAction.UPDATE_EVENT:
         this.#tripModel.updateEvent(updateType, updatedEvent);
         break;
+
       case UserAction.CREATE_EVENT:
         this.#tripModel.createEvent(updateType, updatedEvent);
         break;
@@ -176,9 +183,20 @@ export default class BoardPresenter {
         this.#updateEventList();
         break;
 
-      case UpdateType.FILTER:
       case UpdateType.MAJOR:
         this.#updateBoard();
+        break;
+
+      case UpdateType.FILTER:
+        this.#activeSortType = SortType.DAY;
+        this.#updateBoard();
+        break;
+
+      case UpdateType.INIT:
+        this.#isLoading = false;
+        remove(this.#noEventsComponent);
+        this.#newEventButtonComponent.enable();
+        this.#renderBoard();
         break;
     }
   };

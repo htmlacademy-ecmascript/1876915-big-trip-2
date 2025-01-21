@@ -32,11 +32,11 @@ type Offers = [
 
 type RawEvent = {
   id: string;
-  basePrice: number;
-  dateFrom: string;
-  dateTo: string;
+  base_price: number;
+  date_from: string;
+  date_to: string;
   destination: Id;
-  isFavorite: boolean;
+  is_favorite: boolean;
   offers: Id[];
   type: EventType;
 };

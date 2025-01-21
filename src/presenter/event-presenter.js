@@ -35,7 +35,6 @@ export default class EventPresenter {
     const prevEventComponent = this.#eventComponent;
     const prevFormComponent = this.#formComponent;
 
-    //!!! update?
     this.#eventComponent = new EventView(this.#event, this.#offers, this.#destinations).setOnFavoriteClickHandler(this.#favoriteClickHandler);
     this.#formComponent = new FormView(this.#event, this.#offers, this.#destinations, formMode)
       .setOnFormSubmitHandler(this.#formSubmitHandler)

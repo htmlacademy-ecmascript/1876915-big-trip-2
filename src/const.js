@@ -31,6 +31,7 @@ export const EventListMessage = {
   [FilterType.PAST]: 'There are no past events now',
   [FilterType.PRESENT]: 'There are no present events now',
   [FilterType.FUTURE]: 'There are no future events now',
+  LOADING: 'Loading...'
 };
 
 export const SortType = {
@@ -84,6 +85,7 @@ export const UpdateType = {
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
   FILTER: 'FILTER',
+  INIT: 'INIT',
 };
 
 export const Method = {
