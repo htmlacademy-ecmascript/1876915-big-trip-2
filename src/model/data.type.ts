@@ -23,7 +23,7 @@ type Offer = {
   isChecked: boolean;
 }
 
-type Offers = [
+type RawOffers = [
   {
     type: EventType;
     offers: Offer[];

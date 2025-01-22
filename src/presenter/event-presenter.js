@@ -10,9 +10,9 @@ export default class EventPresenter {
 
   /** @type {TripEvent} */
   #event = null;
-  /** @type {Offers} */
+  /** @type {Map<EventType, Offer[]>} */
   #offers = null;
-  /** @type {Destination} */
+  /** @type {Map<Id, Destination>} */
   #destinations = null;
 
   #formMode = '';
