@@ -108,7 +108,7 @@ export default class BoardPresenter {
     this.#newEventButtonComponent.disable();
     if (this.#events.length === 0) {
       remove(this.#noEventsComponent);
-      this.#renderEventList();//!!! не удалять EventList??
+      this.#renderEventList(); //!!! не удалять EventList?
     }
     this.#newEventPresenter = this.#createEventPresenter(this.#tripModel.getDefaultEvent(), FormMode.CREATE);
   };
@@ -146,7 +146,6 @@ export default class BoardPresenter {
   };
 
   #viewActionHandler = (actionType, updateType, updatedEvent) => {
-    console.log(actionType, updateType, updatedEvent);
 
     switch (actionType) {
       case UserAction.UPDATE_EVENT:
@@ -160,7 +159,7 @@ export default class BoardPresenter {
       case UserAction.CANCEL_EVENT:
         this.#destroyNewEventPresenter();
         if (this.#events.length === 0) {
-          this.#renderNoEvents();//!!!
+          this.#renderNoEvents();
         }
         break;
 
@@ -171,7 +170,6 @@ export default class BoardPresenter {
   };
 
   #onModelChangeHandler = (updateType, payload) => {
-    console.log(updateType, payload);
 
     this.#events = filterEvents(this.#tripModel.events, this.#tripModel.filterType);
 

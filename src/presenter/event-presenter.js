@@ -72,7 +72,7 @@ export default class EventPresenter {
 
   toggleEventView = (direction = EventMode.DEFAULT) => {
     if (direction === EventMode.DEFAULT) {
-      this.#formComponent.updateElement(this.#event);
+      this.#formComponent.reset(this.#event);
       replace(this.#formComponent, this.#eventComponent);
     } else {
       replace(this.#eventComponent, this.#formComponent);
@@ -81,14 +81,12 @@ export default class EventPresenter {
     return this;
   };
 
-  //!!! Можно сделать пере фильтрацию по модели и, если выпадет из списка, то
   #formSubmitHandler = (updatedEvent) => {
     const updateType = (this.#formMode === FormMode.CREATE) ? UpdateType.MAJOR : UpdateType.MINOR;
     const action = (this.#formMode === FormMode.CREATE) ? UserAction.CREATE_EVENT : UserAction.UPDATE_EVENT;
     this.#viewActionCallback?.(action, updateType, updatedEvent);
   };
 
-  //!!! Если больше нет events, то MINOR, а так PATCH
   #formDeleteHandler = (updatedEvent) => {
     const eventsQuantity = this.#getEventsQuantity() - 1;
     const updateType = eventsQuantity ? UpdateType.MINOR : UpdateType.MAJOR;
