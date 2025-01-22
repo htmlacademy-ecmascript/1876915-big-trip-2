@@ -1,5 +1,5 @@
-import { EventMode } from '../const';
-import { remove, render, replace } from '../framework/render';
+import { EventMode, FormMode, UpdateType, UserAction } from '../const';
+import { remove, render, RenderPosition, replace } from '../framework/render';
 import EventView from '../view/event-view';
 import FormView from '../view/form-view';
 
@@ -10,28 +10,41 @@ export default class EventPresenter {
 
   /** @type {TripEvent} */
   #event = null;
-  #onEventChangeCallback = null;
-  #onFormSubmitCallback = null;
+  /** @type {Offers} */
+  #offers = null;
+  /** @type {Destination} */
+  #destinations = null;
 
-  constructor(eventContainer) {
+  #formMode = '';
+
+  #viewActionCallback = null;
+  #getEventsQuantity = null;
+
+  constructor(eventContainer, getEventsQuantity) {
     this.#eventContainer = eventContainer;
+    this.#getEventsQuantity = getEventsQuantity;
   }
 
-  init(event, offers, destinations) {
+  init(event = this.#event, offers = this.#offers, destinations = this.#destinations, formMode = FormMode.EDIT) {
 
     this.#event = event;
+    this.#offers = offers;
+    this.#destinations = destinations;
+    this.#formMode = formMode;
 
     const prevEventComponent = this.#eventComponent;
     const prevFormComponent = this.#formComponent;
 
-    this.#eventComponent = new EventView(event, offers, destinations);
-    this.#eventComponent.setOnFavoriteClickHandler(this.#favoriteClickHandler);
-    this.#formComponent = new FormView(event, offers, destinations);
-    this.#formComponent.setOnFormSubmitHandler(this.#formSubmitHandler);
+    this.#eventComponent = new EventView(this.#event, this.#offers, this.#destinations).setOnFavoriteClickHandler(this.#favoriteClickHandler);
+    this.#formComponent = new FormView(this.#event, this.#offers, this.#destinations, formMode)
+      .setOnFormSubmitHandler(this.#formSubmitHandler)
+      .setOnFormDeleteHandler(this.#formDeleteHandler);
 
     if (prevEventComponent === null || prevFormComponent === null) {
-      render(this.#eventContainer, this.#eventComponent);
-      return;
+      const renderingComponent = (this.#formMode === FormMode.CREATE) ? this.#formComponent : this.#eventComponent;
+      const position = (this.#formMode === FormMode.CREATE) ? RenderPosition.AFTERBEGIN : RenderPosition.BEFOREEND;
+      render(this.#eventContainer, renderingComponent, position);
+      return this;
     }
 
     if (this.#eventContainer.contains(prevEventComponent.element)) {
@@ -43,6 +56,8 @@ export default class EventPresenter {
 
     remove(prevEventComponent);
     remove(prevFormComponent);
+
+    return this;
   }
 
   destroy() {
@@ -50,28 +65,38 @@ export default class EventPresenter {
     remove(this.#formComponent);
   }
 
-  setOnDataChangeHandler = (callback) => {
-    this.#onEventChangeCallback = callback;
-  };
-
-  setOnFormSubmitHandler = (callback) => {
-    this.#onFormSubmitCallback = callback;
+  setViewActionHandler = (callback) => {
+    this.#viewActionCallback = callback;
+    return this;
   };
 
   toggleEventView = (direction = EventMode.DEFAULT) => {
     if (direction === EventMode.DEFAULT) {
-      this.#formComponent.updateElement(this.#event);
+      this.#formComponent.reset(this.#event);
       replace(this.#formComponent, this.#eventComponent);
     } else {
       replace(this.#eventComponent, this.#formComponent);
     }
+
+    return this;
   };
 
   #formSubmitHandler = (updatedEvent) => {
-    this.#onFormSubmitCallback?.(updatedEvent);
+    const updateType = (this.#formMode === FormMode.CREATE) ? UpdateType.MAJOR : UpdateType.MINOR;
+    const action = (this.#formMode === FormMode.CREATE) ? UserAction.CREATE_EVENT : UserAction.UPDATE_EVENT;
+    this.#viewActionCallback?.(action, updateType, updatedEvent);
+  };
+
+  #formDeleteHandler = (updatedEvent) => {
+    const eventsQuantity = this.#getEventsQuantity() - 1;
+    const updateType = eventsQuantity ? UpdateType.MINOR : UpdateType.MAJOR;
+    const action = (this.#formMode === FormMode.CREATE) ? UserAction.CANCEL_EVENT : UserAction.DELETE_EVENT;
+    this.#viewActionCallback?.(action, updateType, updatedEvent);
   };
 
   #favoriteClickHandler = () => {
-    this.#onEventChangeCallback?.({ ...this.#event, isFavorite: !this.#event.isFavorite });
+    this.#viewActionCallback?.(UserAction.UPDATE_EVENT, UpdateType.PATCH,
+      { ...this.#event, isFavorite: !this.#event.isFavorite }
+    );
   };
 }

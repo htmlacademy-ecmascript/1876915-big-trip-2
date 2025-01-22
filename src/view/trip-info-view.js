@@ -7,7 +7,7 @@ const createTripTitle = (events, lastEvent, length, destinations) => {
     return `${destinations.get(events[0].destinationId).name} &mdash; ... &mdash; ${destinations.get(lastEvent.destinationId).name}`;
   }
 
-  return events.map(({ destinationId: { name } }) => name).join(' &mdash; ');
+  return events.map(({ destinationId }) => destinations.get(destinationId).name).join(' &mdash; ');
 };
 
 const createTripDate = (events, lastEvent, length) => {
@@ -24,7 +24,11 @@ const createTripDate = (events, lastEvent, length) => {
   return date;
 };
 
-const createTripInfoTemplate = (events, destinations) => {
+const getOffersPrice = (offers, offerIds) => offers
+  .filter((offer) => offerIds.includes(offer.id))
+  .reduce((accumulator, { price }) => accumulator + (+price), 0);
+
+const createTripInfoTemplate = (events, offers, destinations) => {
   const length = events.length;
 
   if (length === 0) {
@@ -35,7 +39,7 @@ const createTripInfoTemplate = (events, destinations) => {
 
   const title = createTripTitle(events, lastEvent, length, destinations);
   const date = createTripDate(events, lastEvent, length);
-  const price = events.reduce((accumulator, { basePrice }) => accumulator + basePrice, 0);
+  const price = events.reduce((accumulator, { basePrice, type, offerIds }) => accumulator + (+basePrice) + getOffersPrice(offers.get(type), offerIds), 0);
 
   return (`
     <section class="trip-main__trip-info  trip-info">
@@ -54,16 +58,18 @@ const createTripInfoTemplate = (events, destinations) => {
 
 export default class TripInfoView extends AbstractView {
   #events = [];
+  #offers = null;
   #destinations = null;
 
-  constructor(events, destinations) {
+  constructor(events, offers, destinations) {
     super();
     this.#events = events;
+    this.#offers = offers;
     this.#destinations = destinations;
   }
 
   get template() {
-    return createTripInfoTemplate(this.#events, this.#destinations);
+    return createTripInfoTemplate(this.#events, this.#offers, this.#destinations);
   }
 }
 

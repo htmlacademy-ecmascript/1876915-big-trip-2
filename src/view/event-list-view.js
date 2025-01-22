@@ -13,9 +13,11 @@ export default class EventListView extends AbstractView {
 
   setEventToggleHandler = (callback) => {
     this.createEventListener(this.element, 'click', callback);
+    return this;
   };
 
   setEscKeyDownHandler = (callback) => {
     this.createEventListener(document.body, 'keydown', callback);
+    return this;
   };
 }

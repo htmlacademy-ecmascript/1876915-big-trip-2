@@ -1,18 +1,14 @@
 import FilterView from '../view/filter-view';
 import TripInfoView from '../view/trip-info-view';
-import { SortType } from '../const';
+import { SortType, UpdateType } from '../const';
 import { sortEvents } from '../utils/sort';
-import { render, RenderPosition } from '../framework/render';
+import { remove, render, RenderPosition, replace } from '../framework/render';
 
 export default class HeaderPresenter {
   #headerContainer = null;
   #filterContainer = null;
-  #tripInfo = null;
-
-  #filters = [];
-
-  /** @type {TripEvent[]} */
-  #events = [];
+  #tripInfoComponent = null;
+  #filtersComponent = null;
 
   /** @type {TripModel} */
   #tripModel = null;
@@ -21,17 +17,59 @@ export default class HeaderPresenter {
     this.#headerContainer = headerContainer;
     this.#filterContainer = filtersContainer;
     this.#tripModel = tripModel;
+    this.#tripModel.addObserver(this.#onModelChangeHandler);
+  }
+
+  get #events() {
+    return sortEvents(this.#tripModel.events, SortType.DAY);
   }
 
   init() {
-
-    this.#events = sortEvents(this.#tripModel.events, SortType.DAY);
-
-    if (this.#events.length !== 0) {
-      this.#tripInfo = new TripInfoView(this.#events, this.#tripModel.destinations);
-      render(this.#headerContainer, this.#tripInfo, RenderPosition.AFTERBEGIN);
-    }
-    this.#filters = new FilterView(this.#tripModel.filters, this.#tripModel.filterType);
-    render(this.#filterContainer, this.#filters);
+    this.#renderTripInfo();
+    this.#renderFilters();
   }
+
+  #renderTripInfo = () => {
+
+    if (this.#tripInfoComponent && (this.#tripModel.eventsSize === 0)) {
+      remove(this.#tripInfoComponent);
+      this.#tripInfoComponent = null;
+      return;
+    }
+
+    if (this.#tripModel.eventsSize !== 0) {
+      const prevComponent = this.#tripInfoComponent;
+      this.#tripInfoComponent = new TripInfoView(this.#events, this.#tripModel.offers, this.#tripModel.destinations);
+
+      if (!prevComponent) {
+        render(this.#headerContainer, this.#tripInfoComponent, RenderPosition.AFTERBEGIN);
+      } else {
+        replace(prevComponent, this.#tripInfoComponent);
+        remove(prevComponent);
+      }
+    }
+  };
+
+  #renderFilters = () => {
+    const prevComponent = this.#filtersComponent;
+    this.#filtersComponent = new FilterView(this.#tripModel.filters, this.#tripModel.filterType).setOnFilterChangeHandler(this.#onFilterChangeHandler);
+
+    if (!prevComponent) {
+      render(this.#filterContainer, this.#filtersComponent);
+      return;
+    }
+
+    replace(prevComponent, this.#filtersComponent);
+    remove(prevComponent);
+  };
+
+  #onModelChangeHandler = (updateType) => {
+    if ((updateType !== UpdateType.PATCH) && (updateType !== UpdateType.FILTER)) {
+      this.init();
+    }
+  };
+
+  #onFilterChangeHandler = (filterType) => {
+    this.#tripModel.updateFilterType(UpdateType.FILTER, filterType);
+  };
 }

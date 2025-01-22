@@ -12,5 +12,3 @@ export const mix = (data = [], length = 0) => {
 
   return mixedData;
 };
-
-export const updateItem = (items, update) => items.map((item) => item.id === update.id ? update : item);

@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
-import { ButtonText, DateFormat, FormType, KeyCode } from '../const';
+import { ButtonText, DateFormat, FormMode, KeyCode } from '../const';
 import { nanoid } from 'nanoid';
 import { capitalizeFirstLetter } from '../utils/event';
 
@@ -108,8 +108,7 @@ const createEventTimeTemplate = (dateStart, dateEnd) => {
   );
 };
 
-const createEventPriceTemplate = (basePrice) => {
-  const price = (basePrice > 0) ? basePrice : '';
+const createEventPriceTemplate = (price) => {
   const id = nanoid();
 
   return (`
@@ -123,6 +122,11 @@ const createEventPriceTemplate = (basePrice) => {
   );
 };
 
+const createRollUpButtonTemplate = (mode) => (mode === FormMode.EDIT) ? (`
+  <button class="event__rollup-btn" type="button">
+    <span class="visually-hidden">Close event</span>
+  </button>`) : '';
+
 const createFormTemplate = (event, destinations, offers, mode) => {
   const {
     id,
@@ -132,13 +136,21 @@ const createFormTemplate = (event, destinations, offers, mode) => {
     destinationId,
     offerIds,
     type,
+    isDeleting,
+    isDisabled,
+    isSaving,
   } = event || {};
 
   const dateEnd = dayjs(dateTo).format(DateFormat.FORM_START);
   const dateStart = dayjs(dateFrom).format(DateFormat.FORM_START);
   const destination = destinations.get(destinationId);
-  const exitButtonText = (mode === FormType.EDIT) ? ButtonText.DELETE : ButtonText.CANCEL;
-  const submitButtonText = ButtonText.SAVE;
+
+  const submitButtonText = isSaving ? ButtonText.SAVING : ButtonText.SAVE;
+  let exitButtonText = ButtonText.CANCEL;
+  if (mode === FormMode.EDIT) {
+    exitButtonText = isDeleting ? ButtonText.DELETING : ButtonText.DELETE;
+  }
+  const disableStatus = isDisabled ? 'disabled' : '';
 
   const typePickerTemplate = createTypePickerTemplate(type, offers);
   const destinationPickerTemplate = createDestinationPickerTemplate(type, destination, destinations);
@@ -146,6 +158,7 @@ const createFormTemplate = (event, destinations, offers, mode) => {
   const destinationsTemplate = createDestinationsTemplate(destination);
   const eventTimeTemplate = createEventTimeTemplate(dateStart, dateEnd);
   const eventPriceTemplate = createEventPriceTemplate(basePrice);
+  const rollUpButtonTemplate = createRollUpButtonTemplate(mode);
 
   return (`
     <li class="trip-events__item" data-event-id = ${id}>
@@ -164,11 +177,9 @@ const createFormTemplate = (event, destinations, offers, mode) => {
           ${eventTimeTemplate}
           ${eventPriceTemplate}
 
-          <button class="event__save-btn  btn  btn--blue" type="submit">${submitButtonText}</button>
-          <button class="event__reset-btn" type="reset">${exitButtonText}</button>
-          <button class="event__rollup-btn" type="button">
-            <span class="visually-hidden">Close event</span>
-          </button>
+          <button class="event__save-btn  btn  btn--blue" type="submit" ${disableStatus}>${submitButtonText}</button>
+          <button class="event__reset-btn" type="reset" ${disableStatus}>${exitButtonText}</button>
+          ${rollUpButtonTemplate}
         </header>
 
         ${(destinationsTemplate || offersTemplate) ? `
@@ -184,20 +195,21 @@ const createFormTemplate = (event, destinations, offers, mode) => {
 export default class FormView extends AbstractStatefulView {
   #offers = null;
   #destinations = null;
-  #mode = FormType.EDIT;
+  #mode = FormMode.EDIT;
   #onFormSubmitCallback = null;
+  #onFormDeleteCallback = null;
 
   #destinationInputValue = '';
   #datePickerFrom = null;
   #datePickerTo = null;
   #saveButton = null;
 
-  constructor(event, offers, destinations, mode = FormType.EDIT) {
+  constructor(event, offers, destinations, mode = FormMode.EDIT) {
     super();
     this.#offers = offers;
     this.#destinations = destinations;
-    this.#mode = mode in FormType ? mode : FormType.EDIT;
-    this._setState(event);
+    this.#mode = mode;
+    this._setState(this.#parseEventToState(event));
     this._restoreHandlers();
   }
 
@@ -208,18 +220,21 @@ export default class FormView extends AbstractStatefulView {
   _restoreHandlers = () => {
     this.createEventListener(this.element.firstElementChild, 'keydown', this.#formEnterKeyHandler);
     this.createEventListener(this.element.firstElementChild, 'submit', this.#formSubmitHandler, { isPreventDefault: true });
+    this.createEventListener(this.element.firstElementChild, 'reset', this.#formResetHandler, { isPreventDefault: true });
     this.createEventListener(this.element.firstElementChild, 'click', this.#offerClickHandler);
     this.createEventListener('.event__type-list', 'change', this.#eventTypeChangeHandler);
 
-    this.createEventListener('.event__input--destination', 'input', this.#inputDestinationInputHandler);
-    this.createEventListener('.event__input--destination', 'change', this.#inputDestinationChangeHandler);
-    this.createEventListener('.event__input--destination', 'focus', this.#inputDestinationFocusHandler);
-    this.createEventListener('.event__input--destination', 'blur', this.#inputDestinationBlurHandler);
+    this.createEventListener('.event__input--destination', 'input', this.#destinationInputHandler);
+    this.createEventListener('.event__input--destination', 'change', this.#destinationChangeHandler);
+    this.createEventListener('.event__input--destination', 'focus', this.#destinationFocusHandler);
+    this.createEventListener('.event__input--destination', 'blur', this.#destinationBlurHandler);
 
-    if (this.#mode === FormType.EDIT) {
-      this.#initDatepicker();
-    }
-    this.#enableSaveButton();
+    this.createEventListener('.event__input--price', 'input', this.#priceInputHandler);
+    this.createEventListener('.event__input--price', 'change', this.#priceChangeHandler);
+
+    this.#initDatepicker();
+
+    this.#initSaveButton();
   };
 
   removeElement() {
@@ -229,14 +244,24 @@ export default class FormView extends AbstractStatefulView {
       this.#datePickerFrom = null;
     }
 
-    if (this.#datePickerFrom) {
+    if (this.#datePickerTo) {
       this.#datePickerTo.destroy();
       this.#datePickerTo = null;
     }
   }
 
+  reset = (event) => {
+    this.updateElement(this.#parseEventToState(event));
+  };
+
   setOnFormSubmitHandler = (callback) => {
     this.#onFormSubmitCallback = callback;
+    return this;
+  };
+
+  setOnFormDeleteHandler = (callback) => {
+    this.#onFormDeleteCallback = callback;
+    return this;
   };
 
   #eventTypeChangeHandler = (evt) => {
@@ -253,16 +278,24 @@ export default class FormView extends AbstractStatefulView {
     this.updateElement({ offerIds: [], type });
   };
 
-  #inputDestinationFocusHandler = ({ target }) => {
+  #priceInputHandler = ({ target }) => {
+    target.value = target.value.replace(/^0+|\D+/g, '');
+  };
+
+  #priceChangeHandler = ({ target }) => {
+    this._setState({ basePrice: target.value });
+  };
+
+  #destinationFocusHandler = ({ target }) => {
     this.#destinationInputValue = target.value;
     target.value = '';
   };
 
-  #inputDestinationInputHandler = ({ target }) => {
+  #destinationInputHandler = ({ target }) => {
     target.blur();
   };
 
-  #inputDestinationChangeHandler = ({ target }) => {
+  #destinationChangeHandler = ({ target }) => {
     const name = target.value;
     for (const item of this.#destinations.values()) {
       if ((item.name === name) && (this.#destinationInputValue !== name)) {
@@ -273,7 +306,7 @@ export default class FormView extends AbstractStatefulView {
     target.value = '';
   };
 
-  #inputDestinationBlurHandler = ({ target }) => {
+  #destinationBlurHandler = ({ target }) => {
     if (target.value === '') {
       target.value = this.#destinationInputValue;
     }
@@ -303,7 +336,13 @@ export default class FormView extends AbstractStatefulView {
   };
 
   #formSubmitHandler = () => {
-    this.#onFormSubmitCallback?.(this._state);
+    this.updateElement({ isSaving: true, isDisabled: true });
+    this.#onFormSubmitCallback?.(this.#parseStateToEvent(this._state));
+  };
+
+  #formResetHandler = () => {
+    this.updateElement({ isDeleting: true, isDisabled: true });
+    this.#onFormDeleteCallback?.(this.#parseStateToEvent(this._state));
   };
 
   #datePickerOpenHandler = () => {
@@ -314,12 +353,12 @@ export default class FormView extends AbstractStatefulView {
     this.#saveButton.disabled = false;
   };
 
-  #enableSaveButton = () => {
-    if (!this.#saveButton) {
-      this.#saveButton = this.element.querySelector('.event__save-btn');
+  #initSaveButton = () => {
+    if (this.#saveButton) {
+      return;
     }
 
-    this.#saveButton.disabled = false;
+    this.#saveButton = this.element.querySelector('.event__save-btn');
   };
 
   #datePickerFromCloseHandler = ([date]) => {
@@ -371,6 +410,21 @@ export default class FormView extends AbstractStatefulView {
 
     this.#datePickerTo.config.onClose.push(this.#datePickerCloseHandler);
     this.#datePickerFrom.config.onClose.push(this.#datePickerCloseHandler);
+  };
+
+  #parseEventToState = (event) => ({
+    ...event,
+    isSaving: false,
+    isDeleting: false,
+    isDisabled: false,
+  });
+
+  #parseStateToEvent = (state) => {
+    delete state.isSaving;
+    delete state.isDeleting;
+    delete state.isDisabled;
+
+    return state;
   };
 }
 

@@ -1,16 +1,24 @@
+import Observable from '../framework/observable';
 import { createFilters } from '../utils/filter';
 import { createSortItems } from '../utils/sort';
 import { generateTripData } from '../../mocks/generate-data';
-import { FilterType, tripDefault } from '../const';
+import { FilterType, tripDefault, UpdateType } from '../const';
 
-export default class TripModel {
-  #events = [];
+export default class TripModel extends Observable {
+  #eventApiService = null;
+  #events = new Map();
   #destinations = new Map();
   #offers = new Map();
   #filterType = FilterType.EVERYTHING;
 
+  constructor(eventApiService) {
+    super();
+
+    this.#eventApiService = eventApiService;
+  }
+
   get events() {
-    return this.#events;
+    return Array.from(this.#events.values());
   }
 
   get destinations() {
@@ -22,15 +30,19 @@ export default class TripModel {
   }
 
   get filters() {
-    return createFilters(this.#events);
+    return createFilters(this.events);
   }
 
   get sortItems() {
-    return createSortItems(this.#events);
+    return createSortItems(this.events);
   }
 
   get filterType() {
     return this.#filterType;
+  }
+
+  get eventsSize() {
+    return this.#events.size;
   }
 
   getDefaultEvent = () => {
@@ -41,22 +53,98 @@ export default class TripModel {
       ...tripDefault,
       dateFrom: date,
       dateTo: date,
-      offerIds: this.#offers.get(type),
+      destinationId: this.#destinations.values().next().value.id,
       type,
     };
   };
 
-  init() {
-    const [rawEvents, rawOffers, rawDestinations] = generateTripData();
+  async init() {
+    try {
+      const [rawEvents, rawOffers, rawDestinations] = await this.#eventApiService.getTripData();
 
-    this.#events = rawEvents;
+      this.#events = new Map(rawEvents.map(this.#adaptEventToClient));
+      this.#offers = new Map(rawOffers.map(this.#adaptOffersToClient));
+      this.#destinations = new Map(rawDestinations.map(this.#adaptDestinationsToClient));
+    } catch (err) {
 
-    rawOffers.forEach(({ type, offers }) => {
-      this.#offers.set(type, offers);
-    });
+      const [rawEvents, rawOffers, rawDestinations] = generateTripData();
 
-    rawDestinations.forEach((destination) => {
-      this.#destinations.set(destination.id, destination);
-    });
+      rawEvents.forEach((event) => {
+        this.#events.set(event.id, event);
+      });
+
+      rawOffers.forEach(({ type, offers }) => {
+        this.#offers.set(type, offers);
+      });
+
+      rawDestinations.forEach((destination) => {
+        this.#destinations.set(destination.id, destination);
+      });
+
+    } finally {
+      this._notify(UpdateType.INIT);
+    }
+
   }
+
+  #checkEventExistence = (id) => {
+    if (this.#events.has(id)) {
+      return;
+    }
+
+    throw new Error(`Event with id: ${id} doesn't exist`);
+  };
+
+  createEvent = async (updateType, event) => {
+    try {
+      const response = await this.#eventApiService.createEvent(event);
+      const [id, newEvent] = this.#adaptEventToClient(response);
+      this.#events.set(id, newEvent);
+      this._notify(updateType, newEvent);
+    } catch {
+      throw new Error('Can\'t crete event');
+    }
+  };
+
+  updateEvent = async (updateType, event) => {
+    try {
+      this.#checkEventExistence(event.id);
+      const response = await this.#eventApiService.updateEvent(event);
+      const [id, newEvent] = this.#adaptEventToClient(response);
+      this.#events.set(id, newEvent);
+      this._notify(updateType, newEvent);
+    } catch {
+      throw new Error('Can\'t update event');
+    }
+  };
+
+  deleteEvent = async (updateType, event) => {
+    try {
+      this.#checkEventExistence(event.id);
+      await this.#eventApiService.deleteEvent(event);
+      this.#events.delete(event.id);
+      this._notify(updateType, event);
+    } catch {
+      throw new Error('Can\'t delete event');
+    }
+  };
+
+  updateFilterType = (updateType, filterType) => {
+    this.#filterType = filterType;
+    this._notify(updateType);
+  };
+
+  #adaptEventToClient = (event) => ([event.id, {
+    id: event.id,
+    basePrice: event['base_price'],
+    dateFrom: event['date_from'],
+    dateTo: event['date_to'],
+    destinationId: event.destination,
+    isFavorite: event['is_favorite'],
+    offerIds: event.offers,
+    type: event.type,
+  }]);
+
+  #adaptOffersToClient = ({ type, offers }) => [type, offers];
+  #adaptDestinationsToClient = (destination) => [destination.id, destination];
 }
