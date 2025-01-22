@@ -76,8 +76,11 @@ const createEventTemplate = (event, offers, destinations) => {
 };
 
 export default class EventView extends AbstractView {
+  /** @type {TripEvent} */
   #event = null;
+  /** @type {Map<EventType, Offer[]>} */
   #offers = null;
+  /** @type {Map<Id, Destination>} */
   #destinations = null;
 
   constructor(event, offers, destinations) {

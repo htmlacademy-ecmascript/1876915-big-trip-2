@@ -193,7 +193,9 @@ const createFormTemplate = (event, destinations, offers, mode) => {
 };
 
 export default class FormView extends AbstractStatefulView {
+  /** @type {Map<EventType, Offer[]>} */
   #offers = null;
+  /** @type {Map<Id, Destination>} */
   #destinations = null;
   #mode = FormMode.EDIT;
   #onFormSubmitCallback = null;
@@ -233,7 +235,6 @@ export default class FormView extends AbstractStatefulView {
     this.createEventListener('.event__input--price', 'change', this.#priceChangeHandler);
 
     this.#initDatepicker();
-
     this.#initSaveButton();
   };
 
