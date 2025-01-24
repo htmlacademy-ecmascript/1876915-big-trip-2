@@ -59,7 +59,7 @@ export default class BoardPresenter {
       this.#renderNoEvents();
       return;
     }
-
+    remove(this.#noEventsComponent);
     this.#renderSort();
     this.#renderEventList();
     this.#renderEvents();
@@ -67,6 +67,7 @@ export default class BoardPresenter {
 
   #renderNoEvents = () => {
     const message = this.#isLoading ? EventListMessage.LOADING : EventListMessage[this.#tripModel.filterType];
+    this.#isLoading = '';
     this.#noEventsComponent = new NoEventsView(message);
     render(this.#boardContainer, this.#noEventsComponent);
   };
@@ -106,10 +107,6 @@ export default class BoardPresenter {
     this.#activeSortType = SortType.DAY;
     this.#tripModel.updateFilterType(UpdateType.MAJOR, FilterType.EVERYTHING);
     this.#newEventButtonComponent.disable();
-    if (this.#events.length === 0) {
-      remove(this.#noEventsComponent);
-      this.#renderEventList(); //!!! не удалять EventList?
-    }
     this.#newEventPresenter = this.#createEventPresenter(this.#tripModel.getDefaultEvent(), FormMode.CREATE);
   };
 
@@ -145,6 +142,15 @@ export default class BoardPresenter {
     }
   };
 
+  #deleteEvent = (updateType, updatedEvent) => {
+    this.#destroyNewEventPresenter();
+    if (this.#events.length === 0) {
+      this.#renderNoEvents();
+    } else {
+      this.#tripModel.deleteEvent(updateType, updatedEvent);
+    }
+  };
+
   #viewActionHandler = (actionType, updateType, updatedEvent) => {
 
     switch (actionType) {
@@ -156,15 +162,8 @@ export default class BoardPresenter {
         this.#tripModel.createEvent(updateType, updatedEvent);
         break;
 
-      case UserAction.CANCEL_EVENT:
-        this.#destroyNewEventPresenter();
-        if (this.#events.length === 0) {
-          this.#renderNoEvents();
-        }
-        break;
-
       case UserAction.DELETE_EVENT:
-        this.#tripModel.deleteEvent(updateType, updatedEvent);
+        this.#deleteEvent(updateType, updatedEvent);
         break;
     }
   };
@@ -177,6 +176,7 @@ export default class BoardPresenter {
       case UpdateType.PATCH:
         this.#eventPresenters.get(payload.id).init(payload);
         break;
+
       case UpdateType.MINOR:
         this.#updateEventList();
         break;
@@ -191,8 +191,6 @@ export default class BoardPresenter {
         break;
 
       case UpdateType.INIT:
-        this.#isLoading = false;
-        remove(this.#noEventsComponent);
         this.#newEventButtonComponent.enable();
         this.#renderBoard();
         break;

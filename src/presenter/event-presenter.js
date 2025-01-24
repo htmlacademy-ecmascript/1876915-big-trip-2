@@ -35,6 +35,7 @@ export default class EventPresenter {
     const prevEventComponent = this.#eventComponent;
     const prevFormComponent = this.#formComponent;
 
+    //!!! update
     this.#eventComponent = new EventView(this.#event, this.#offers, this.#destinations).setOnFavoriteClickHandler(this.#favoriteClickHandler);
     this.#formComponent = new FormView(this.#event, this.#offers, this.#destinations, formMode)
       .setOnFormSubmitHandler(this.#formSubmitHandler)
@@ -90,8 +91,7 @@ export default class EventPresenter {
   #formDeleteHandler = (updatedEvent) => {
     const eventsQuantity = this.#getEventsQuantity() - 1;
     const updateType = eventsQuantity ? UpdateType.MINOR : UpdateType.MAJOR;
-    const action = (this.#formMode === FormMode.CREATE) ? UserAction.CANCEL_EVENT : UserAction.DELETE_EVENT;
-    this.#viewActionCallback?.(action, updateType, updatedEvent);
+    this.#viewActionCallback?.(UserAction.DELETE_EVENT, updateType, updatedEvent);
   };
 
   #favoriteClickHandler = () => {
