@@ -38,6 +38,7 @@ function render(container, component, place = RenderPosition.BEFOREEND) {
   if (!((container instanceof Element) && (component instanceof Element))) {
     throw new Error('Container or component aren\'t instance of Element');
   }
+
   container.insertAdjacentElement(place, component);
 }
 

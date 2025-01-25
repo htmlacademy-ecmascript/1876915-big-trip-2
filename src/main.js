@@ -12,6 +12,7 @@ const filtersContainer = tripInfoContainer.querySelector('.trip-controls__filter
 const contentContainer = document.querySelector('.trip-events');
 
 const model = new TripModel(new EventApiService(END_POINT, AUTHORIZATION));
+model.init();
 
 const header = new HeaderPresenter(tripInfoContainer, filtersContainer, model);
 header.init();
@@ -19,4 +20,3 @@ header.init();
 const board = new BoardPresenter(contentContainer, tripInfoContainer, model);
 board.init();
 
-model.init();

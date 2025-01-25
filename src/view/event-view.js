@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
-import AbstractView from '../framework/view/abstract-view';
 import { DateFormat } from '../const';
 import { getDuration } from '../utils/event';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
 const createOfferListTemplate = (offers) => (
   `${offers.map(({ title, price }) => (`
@@ -75,27 +75,34 @@ const createEventTemplate = (event, offers, destinations) => {
   );
 };
 
-export default class EventView extends AbstractView {
-  /** @type {TripEvent} */
-  #event = null;
+export default class EventView extends AbstractStatefulView {
   /** @type {Map<EventType, Offer[]>} */
   #offers = null;
   /** @type {Map<Id, Destination>} */
   #destinations = null;
 
+  #onFavoriteClickCallback = null;
+
   constructor(event, offers, destinations) {
     super();
-    this.#event = event;
+    this._setState(event);
     this.#offers = offers;
     this.#destinations = destinations;
+    this._restoreHandlers();
   }
 
   get template() {
-    return createEventTemplate(this.#event, this.#offers, this.#destinations);
+    return createEventTemplate(this._state, this.#offers, this.#destinations);
   }
 
+  _restoreHandlers = () => {
+    this.createEventListener('.event__favorite-btn', 'click', this.#onFavoriteClickHandler);
+  };
+
   setOnFavoriteClickHandler = (callback) => {
-    this.createEventListener('.event__favorite-btn', 'click', callback);
+    this.#onFavoriteClickCallback = callback;
     return this;
   };
+
+  #onFavoriteClickHandler = () => this.#onFavoriteClickCallback?.();
 }

@@ -31,13 +31,7 @@ export default class HeaderPresenter {
 
   #renderTripInfo = () => {
 
-    if (this.#tripInfoComponent && (this.#tripModel.eventsSize === 0)) {
-      remove(this.#tripInfoComponent);
-      this.#tripInfoComponent = null;
-      return;
-    }
-
-    if (this.#tripModel.eventsSize !== 0) {
+    if (this.#tripModel.eventsSize > 0) {
       const prevComponent = this.#tripInfoComponent;
       this.#tripInfoComponent = new TripInfoView(this.#events, this.#tripModel.offers, this.#tripModel.destinations);
 
@@ -47,6 +41,13 @@ export default class HeaderPresenter {
         replace(prevComponent, this.#tripInfoComponent);
         remove(prevComponent);
       }
+
+      return;
+    }
+
+    if (this.#tripInfoComponent) {
+      remove(this.#tripInfoComponent);
+      this.#tripInfoComponent = null;
     }
   };
 
@@ -64,12 +65,12 @@ export default class HeaderPresenter {
   };
 
   #onModelChangeHandler = (updateType) => {
-    if ((updateType !== UpdateType.PATCH) && (updateType !== UpdateType.FILTER)) {
+    if (updateType !== UpdateType.PATCH) {
       this.init();
     }
   };
 
   #onFilterChangeHandler = (filterType) => {
-    this.#tripModel.updateFilterType(UpdateType.FILTER, filterType);
+    this.#tripModel.updateFilterType(UpdateType.MAJOR, filterType);
   };
 }

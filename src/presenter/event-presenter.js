@@ -15,7 +15,8 @@ export default class EventPresenter {
   /** @type {Map<Id, Destination>} */
   #destinations = null;
 
-  #formMode = '';
+  #formMode = FormMode.EDIT;
+  #eventMode = EventMode.DEFAULT;
 
   #viewActionCallback = null;
   #getEventsQuantity = null;
@@ -31,39 +32,46 @@ export default class EventPresenter {
     this.#offers = offers;
     this.#destinations = destinations;
     this.#formMode = formMode;
+    this.#eventMode = (this.#formMode === FormMode.CREATE) ? EventMode.FORM : EventMode.DEFAULT;
 
-    const prevEventComponent = this.#eventComponent;
-    const prevFormComponent = this.#formComponent;
 
-    this.#eventComponent = new EventView(this.#event, this.#offers, this.#destinations).setOnFavoriteClickHandler(this.#favoriteClickHandler);
-    this.#formComponent = new FormView(this.#event, this.#offers, this.#destinations, formMode)
-      .setOnFormSubmitHandler(this.#formSubmitHandler)
-      .setOnFormDeleteHandler(this.#formDeleteHandler);
+    if ((this.#eventComponent === null) || (this.#formComponent === null)) {
 
-    if (prevEventComponent === null || prevFormComponent === null) {
-      const renderingComponent = (this.#formMode === FormMode.CREATE) ? this.#formComponent : this.#eventComponent;
+      this.#eventComponent = new EventView(this.#event, this.#offers, this.#destinations)
+        .setOnFavoriteClickHandler(this.#favoriteClickHandler);
+
+      this.#formComponent = new FormView(this.#event, this.#offers, this.#destinations, formMode)
+        .setOnFormSubmitHandler(this.#formSubmitHandler)
+        .setOnFormDeleteHandler(this.#formDeleteHandler);
+
+      const component = (this.#formMode === FormMode.CREATE) ? this.#formComponent : this.#eventComponent;
       const position = (this.#formMode === FormMode.CREATE) ? RenderPosition.AFTERBEGIN : RenderPosition.BEFOREEND;
-      render(this.#eventContainer, renderingComponent, position);
+
+      render(this.#eventContainer, component, position);
       return this;
     }
-
-    if (this.#eventContainer.contains(prevEventComponent.element)) {
-      replace(prevEventComponent, this.#eventComponent);
+    if (this.#eventMode === EventMode.DEFAULT) {
+      this.#eventComponent.updateElement(this.#event);
+    } else {
+      this.#formComponent.updateElement(this.#event);
     }
-    if (this.#eventContainer.contains(prevFormComponent.element)) {
-      replace(prevFormComponent, this.#formComponent);
-    }
-
-    remove(prevEventComponent);
-    remove(prevFormComponent);
 
     return this;
   }
 
-  destroy() {
+  destroy = () => {
     remove(this.#eventComponent);
     remove(this.#formComponent);
-  }
+  };
+
+  abort = () => {
+    if (this.#eventMode === EventMode.DEFAULT) {
+      this.#eventComponent?.shake();
+      return;
+    }
+
+    this.#formComponent?.shake(() => this.#formComponent.reset());
+  };
 
   setViewActionHandler = (callback) => {
     this.#viewActionCallback = callback;
@@ -73,8 +81,10 @@ export default class EventPresenter {
   toggleEventView = (direction = EventMode.DEFAULT) => {
     if (direction === EventMode.DEFAULT) {
       this.#formComponent.reset(this.#event);
+      this.#eventMode = EventMode.DEFAULT;
       replace(this.#formComponent, this.#eventComponent);
     } else {
+      this.#eventMode = EventMode.FORM;
       replace(this.#eventComponent, this.#formComponent);
     }
 
@@ -90,8 +100,7 @@ export default class EventPresenter {
   #formDeleteHandler = (updatedEvent) => {
     const eventsQuantity = this.#getEventsQuantity() - 1;
     const updateType = eventsQuantity ? UpdateType.MINOR : UpdateType.MAJOR;
-    const action = (this.#formMode === FormMode.CREATE) ? UserAction.CANCEL_EVENT : UserAction.DELETE_EVENT;
-    this.#viewActionCallback?.(action, updateType, updatedEvent);
+    this.#viewActionCallback?.(UserAction.DELETE_EVENT, updateType, updatedEvent);
   };
 
   #favoriteClickHandler = () => {
