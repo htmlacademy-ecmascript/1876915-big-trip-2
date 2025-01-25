@@ -31,7 +31,6 @@ export default class FilterView extends AbstractView {
     this.#filters = filters;
     this.#activeFilter = activeFilter;
     this.createEventListener(this.element, 'click', this.#onFilterChangeHandler);
-    this.createEventListener(this.element, 'submit', this.#onFormSubmitHandler, { isPreventDefault: true });
   }
 
   get template() {
@@ -57,24 +56,6 @@ export default class FilterView extends AbstractView {
     }
 
     this.#activeFilter = target.dataset.filterType;
-    this.#onFilterChangeCallback?.(this.#activeFilter);
-  };
-
-  #onFormSubmitHandler = () => {
-    let newFilter = this.#activeFilter;
-
-    for (const element of this.element['trip-filter']) {
-      if (element.checked) {
-        newFilter = element.value;
-        break;
-      }
-    }
-
-    if (newFilter === this.#activeFilter) {
-      return;
-    }
-
-    this.#activeFilter = newFilter;
     this.#onFilterChangeCallback?.(this.#activeFilter);
   };
 }

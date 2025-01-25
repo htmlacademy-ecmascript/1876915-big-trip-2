@@ -1,15 +1,19 @@
 import Observable from '../framework/observable';
 import { createFilters } from '../utils/filter';
 import { createSortItems } from '../utils/sort';
-import { generateTripData } from '../../mocks/generate-data';
-import { FilterType, tripDefault, UpdateType } from '../const';
+import { EventListMessage, FilterType, tripDefault, UpdateType } from '../const';
 
 export default class TripModel extends Observable {
   #eventApiService = null;
+  /** @type {Map<Id, TripEvent>} */
   #events = new Map();
-  #destinations = new Map();
+  /** @type {Map<EventType, Offer[]>} */
   #offers = new Map();
+  /** @type {Map<Id, Destination>} */
+  #destinations = new Map();
+
   #filterType = FilterType.EVERYTHING;
+  #error = '';
 
   constructor(eventApiService) {
     super();
@@ -45,6 +49,10 @@ export default class TripModel extends Observable {
     return this.#events.size;
   }
 
+  get errorMessage() {
+    return this.#error;
+  }
+
   getDefaultEvent = () => {
     const date = new Date().toISOString();
     const type = this.#offers.has(tripDefault.type) ? tripDefault.type : this.#offers.keys()[0];
@@ -65,26 +73,11 @@ export default class TripModel extends Observable {
       this.#events = new Map(rawEvents.map(this.#adaptEventToClient));
       this.#offers = new Map(rawOffers.map(this.#adaptOffersToClient));
       this.#destinations = new Map(rawDestinations.map(this.#adaptDestinationsToClient));
-    } catch (err) {
-
-      const [rawEvents, rawOffers, rawDestinations] = generateTripData();
-
-      rawEvents.forEach((event) => {
-        this.#events.set(event.id, event);
-      });
-
-      rawOffers.forEach(({ type, offers }) => {
-        this.#offers.set(type, offers);
-      });
-
-      rawDestinations.forEach((destination) => {
-        this.#destinations.set(destination.id, destination);
-      });
-
+    } catch {
+      this.#error = EventListMessage.ERROR;
     } finally {
-      this._notify(UpdateType.INIT);
+      this._notify(UpdateType.MAJOR);
     }
-
   }
 
   #checkEventExistence = (id) => {

@@ -4,18 +4,11 @@ import ApiService from './framework/api-service';
 export default class EventApiService extends ApiService {
 
   async getTripData() {
-    const data = await Promise.all([
+    return Promise.all([
       this._load({ url: 'points' }),
       this._load({ url: 'offers' }),
       this._load({ url: 'destinations' })
-    ]).then((response) => response.map(ApiService.parseResponse));
-
-    const result = [];
-    for await (const item of data) {
-      result.push(item);
-    }
-
-    return result;
+    ]).then((response) => Promise.all(response.map(ApiService.parseResponse)));
   }
 
   async createEvent(event) {
@@ -26,9 +19,7 @@ export default class EventApiService extends ApiService {
       headers: new Headers({ 'Content-Type': 'application/json' }),
     });
 
-    const parsedResponse = await ApiService.parseResponse(response);
-
-    return parsedResponse;
+    return ApiService.parseResponse(response);
   }
 
   async updateEvent(event) {
@@ -39,9 +30,7 @@ export default class EventApiService extends ApiService {
       headers: new Headers({ 'Content-Type': 'application/json' }),
     });
 
-    const parsedResponse = await ApiService.parseResponse(response);
-
-    return parsedResponse;
+    return ApiService.parseResponse(response);
   }
 
   async deleteEvent(event) {
