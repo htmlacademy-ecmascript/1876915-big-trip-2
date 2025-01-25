@@ -31,7 +31,8 @@ export const EventListMessage = {
   [FilterType.PAST]: 'There are no past events now',
   [FilterType.PRESENT]: 'There are no present events now',
   [FilterType.FUTURE]: 'There are no future events now',
-  LOADING: 'Loading...'
+  LOADING: 'Loading...',
+  ERROR: 'The app is not available'
 };
 
 export const SortType = {
@@ -83,8 +84,6 @@ export const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
-  FILTER: 'FILTER',
-  INIT: 'INIT',
 };
 
 export const Method = {
@@ -92,4 +91,9 @@ export const Method = {
   PUT: 'PUT',
   POST: 'POST',
   DELETE: 'DELETE',
+};
+
+export const UiBlockerTimeLimit = {
+  LOWER_LIMIT: 350,
+  UPPER_LIMIT: 1000,
 };

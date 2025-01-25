@@ -1,5 +1,5 @@
 import { sortEvents } from '../utils/sort';
-import { ElementSelectors as E, EventListMessage, EventMode, FilterType, FormMode, KeyCode, SortType, UpdateType, UserAction } from '../const';
+import { ElementSelectors as E, EventListMessage, EventMode, FilterType, FormMode, KeyCode, SortType, UiBlockerTimeLimit, UpdateType, UserAction } from '../const';
 import SortView from '../view/sort-view';
 import EventListView from '../view/event-list-view';
 import NoEventsView from '../view/no-events-view';
@@ -7,6 +7,7 @@ import NewEventButtonView from '../view/new-event-button-view';
 import { filterEvents } from '../utils/filter';
 import EventPresenter from './event-presenter';
 import { remove, render } from '../framework/render';
+import UiBlocker from '../framework/ui-blocker/ui-blocker';
 
 export default class BoardPresenter {
   #boardContainer = null;
@@ -30,6 +31,11 @@ export default class BoardPresenter {
 
   #isLoading = true;
 
+  #uiBlocker = new UiBlocker({
+    lowerLimit: UiBlockerTimeLimit.LOWER_LIMIT,
+    upperLimit: UiBlockerTimeLimit.UPPER_LIMIT
+  });
+
   constructor(boardContainer, newEventButtonContainer, tripModel) {
     this.#boardContainer = boardContainer;
     this.#newEventButtonContainer = newEventButtonContainer;
@@ -46,7 +52,6 @@ export default class BoardPresenter {
   }
 
   init() {
-
     this.#newEventButtonComponent.setOnClickHandler(this.#newEventHandler);
     render(this.#newEventButtonContainer, this.#newEventButtonComponent);
 
@@ -54,25 +59,53 @@ export default class BoardPresenter {
   }
 
   #renderBoard = () => {
+    // if ((this.#events.length === 0) || (this.#isLoading)) {
+    //   this.#renderNoEvents();
+    //   return;
+    // }
 
-    if ((this.#events.length === 0) || (this.#isLoading)) {
-      this.#renderNoEvents();
+    const message = this.#getNoEventMessage();
+    if (message) {
+      this.#renderNoEvents(message);
       return;
     }
-    remove(this.#noEventsComponent);
+
+    this.#newEventButtonComponent.enable();
     this.#renderSort();
     this.#renderEventList();
     this.#renderEvents();
   };
 
-  #renderNoEvents = () => {
-    const message = this.#isLoading ? EventListMessage.LOADING : EventListMessage[this.#tripModel.filterType];
-    this.#isLoading = '';
+  #renderNoEvents = (message) => {
+    // let mesa
+    // if (this.#isLoading) {
+    //   const message = EventListMessage.LOADING;
+    // } else {
+    //   const message = this.#tripModel.loadingError ? EventListMessage.ERROR : EventListMessage[this.#tripModel.filterType];
+    // }
+
+    // const message = this.#isLoading ? EventListMessage.LOADING : EventListMessage[this.#tripModel.filterType];
+    // this.#isLoading = '';
+
     this.#noEventsComponent = new NoEventsView(message);
     render(this.#boardContainer, this.#noEventsComponent);
   };
 
+  #getNoEventMessage() {
+    if (this.#isLoading) {
+      this.#isLoading = '';
+      return EventListMessage.LOADING;
+    }
+
+    if (this.#tripModel.error) {
+      return this.#tripModel.error;
+    }
+
+    return (this.#events.length === 0) ? EventListMessage[this.#tripModel.filterType] : '';
+  }
+
   #renderEventList = () => {
+    remove(this.#noEventsComponent);
     this.#eventListComponent = new EventListView()
       .setEventToggleHandler(this.#eventToggleHandler)
       .setEscKeyDownHandler(this.#escKeyHandler);
@@ -107,6 +140,9 @@ export default class BoardPresenter {
     this.#activeSortType = SortType.DAY;
     this.#tripModel.updateFilterType(UpdateType.MAJOR, FilterType.EVERYTHING);
     this.#newEventButtonComponent.disable();
+    if (this.#events.length === 0) {
+      this.#renderEventList();
+    }
     this.#newEventPresenter = this.#createEventPresenter(this.#tripModel.getDefaultEvent(), FormMode.CREATE);
   };
 
@@ -142,34 +178,51 @@ export default class BoardPresenter {
     }
   };
 
-  #deleteEvent = (updateType, updatedEvent) => {
+  #deleteEvent = async (updateType, updatedEvent) => {
+    if (updatedEvent.id) {
+      await this.#tripModel.deleteEvent(updateType, updatedEvent);
+      return;
+    }
+
     this.#destroyNewEventPresenter();
     if (this.#events.length === 0) {
       this.#renderNoEvents();
-    } else {
-      this.#tripModel.deleteEvent(updateType, updatedEvent);
     }
   };
 
-  #viewActionHandler = (actionType, updateType, updatedEvent) => {
+  #viewActionHandler = async (actionType, updateType, updatedEvent) => {
+    this.#uiBlocker.block();
 
     switch (actionType) {
       case UserAction.UPDATE_EVENT:
-        this.#tripModel.updateEvent(updateType, updatedEvent);
+        try {
+          await this.#tripModel.updateEvent(updateType, updatedEvent);
+        } catch {
+          this.#eventPresenters.get(updatedEvent.id).abort();
+        }
         break;
 
       case UserAction.CREATE_EVENT:
-        this.#tripModel.createEvent(updateType, updatedEvent);
+        try {
+          await this.#tripModel.createEvent(updateType, updatedEvent);
+        } catch {
+          this.#newEventPresenter.abort();
+        }
         break;
 
       case UserAction.DELETE_EVENT:
-        this.#deleteEvent(updateType, updatedEvent);
+        try {
+          await this.#deleteEvent(updateType, updatedEvent);
+        } catch {
+          this.#eventPresenters.get(updatedEvent.id)?.abort();
+        }
         break;
     }
+
+    this.#uiBlocker.unblock();
   };
 
   #onModelChangeHandler = (updateType, payload) => {
-
     this.#events = filterEvents(this.#tripModel.events, this.#tripModel.filterType);
 
     switch (updateType) {
@@ -182,17 +235,8 @@ export default class BoardPresenter {
         break;
 
       case UpdateType.MAJOR:
-        this.#updateBoard();
-        break;
-
-      case UpdateType.FILTER:
         this.#activeSortType = SortType.DAY;
         this.#updateBoard();
-        break;
-
-      case UpdateType.INIT:
-        this.#newEventButtonComponent.enable();
-        this.#renderBoard();
         break;
     }
   };
