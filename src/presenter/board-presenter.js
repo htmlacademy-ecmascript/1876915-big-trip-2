@@ -51,6 +51,10 @@ export default class BoardPresenter {
     return this.#tripModel.destinations;
   }
 
+  get #sortedEvents() {
+    return sortEvents(this.#events, this.#activeSortType);
+  }
+
   init() {
     this.#newEventButtonComponent.setOnClickHandler(this.#newEventHandler);
     render(this.#newEventButtonContainer, this.#newEventButtonComponent);
@@ -59,10 +63,6 @@ export default class BoardPresenter {
   }
 
   #renderBoard = () => {
-    // if ((this.#events.length === 0) || (this.#isLoading)) {
-    //   this.#renderNoEvents();
-    //   return;
-    // }
 
     const message = this.#getNoEventMessage();
     if (message) {
@@ -77,16 +77,6 @@ export default class BoardPresenter {
   };
 
   #renderNoEvents = (message) => {
-    // let mesa
-    // if (this.#isLoading) {
-    //   const message = EventListMessage.LOADING;
-    // } else {
-    //   const message = this.#tripModel.loadingError ? EventListMessage.ERROR : EventListMessage[this.#tripModel.filterType];
-    // }
-
-    // const message = this.#isLoading ? EventListMessage.LOADING : EventListMessage[this.#tripModel.filterType];
-    // this.#isLoading = '';
-
     this.#noEventsComponent = new NoEventsView(message);
     render(this.#boardContainer, this.#noEventsComponent);
   };
@@ -130,7 +120,7 @@ export default class BoardPresenter {
     .init(event, this.#offers, this.#destinations, mode)
     .setViewActionHandler(this.#viewActionHandler);
 
-  #renderEvents = () => sortEvents(this.#events, this.#activeSortType).forEach((event) => {
+  #renderEvents = () => this.#sortedEvents.forEach((event) => {
     const presenter = this.#createEventPresenter(event);
     this.#eventPresenters.set(event.id, presenter);
   });
@@ -148,10 +138,15 @@ export default class BoardPresenter {
 
   #updateEventList = () => {
     this.#destroyEventPresenters();
-    this.#renderEvents();
+    if (this.#sortedEvents.length) {
+      this.#renderEvents();
+    } else {
+      this.#renderBoard();
+    }
   };
 
   #updateBoard = () => {
+    this.#activeSortType = SortType.DAY;
     this.#destroyBoard();
     this.#renderBoard();
   };
@@ -235,7 +230,6 @@ export default class BoardPresenter {
         break;
 
       case UpdateType.MAJOR:
-        this.#activeSortType = SortType.DAY;
         this.#updateBoard();
         break;
     }

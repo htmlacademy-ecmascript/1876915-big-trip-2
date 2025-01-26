@@ -13,8 +13,6 @@ export default class HeaderPresenter {
   /** @type {TripModel} */
   #tripModel = null;
 
-  #activeFilter = '';
-
   constructor(headerContainer, filtersContainer, tripModel) {
     this.#headerContainer = headerContainer;
     this.#filterContainer = filtersContainer;
@@ -67,8 +65,7 @@ export default class HeaderPresenter {
   };
 
   #onModelChangeHandler = (updateType) => {
-    if ((updateType !== UpdateType.PATCH) && (this.#activeFilter !== this.#tripModel.filterType)) {
-      this.#activeFilter = this.#tripModel.filterType;
+    if (updateType !== UpdateType.PATCH) {
       this.init();
     }
   };
