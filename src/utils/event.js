@@ -3,8 +3,10 @@ import duration from 'dayjs/plugin/duration';
 dayjs.extend(duration);
 
 export const getDuration = (timeStart, timeEnd) => {
+
   const [start, end] = [dayjs(timeStart), dayjs(timeEnd)];
-  const { days, hours, minutes } = dayjs.duration(end.diff(start)).$d;
+  const { hours, minutes } = dayjs.duration(end.diff(start)).$d;
+  const days = end.diff(start, 'day');
   const minutesString = `${minutes}M`.padStart(3, '0');
 
   if (days) {

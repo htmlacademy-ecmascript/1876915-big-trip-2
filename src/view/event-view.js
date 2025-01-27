@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
+import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 import { DateFormat } from '../const';
 import { getDuration } from '../utils/event';
-import AbstractStatefulView from '../framework/view/abstract-stateful-view';
 
 const createOfferListTemplate = (offers) => (
   `${offers.map(({ title, price }) => (`

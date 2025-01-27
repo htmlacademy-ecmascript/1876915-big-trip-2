@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import AbstractStatefulView from '../framework/view/abstract-stateful-view';
-import { ButtonText, DateFormat, FormMode, KeyCode } from '../const';
 import { nanoid } from 'nanoid';
 import { capitalizeFirstLetter } from '../utils/event';
+import { ButtonText, DateFormat, FormMode } from '../const';
 
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
@@ -59,13 +59,13 @@ const createOffersTemplate = (offers, offerIds, type) => {
 };
 
 const createDestinationPickerTemplate = (type, destination, destinations = []) => {
-  const listId = nanoid();
+  const [labelId, listId] = [nanoid(), nanoid()];
   const optionString = destinations.values().reduce((accumulator, { name }) => `${accumulator}<option value="${name}"></option>`, '');
 
   return (`
     <div div class="event__field-group  event__field-group--destination" >
-      <label class="event__label  event__type-output" for="event-destination-${destination.id}">${type}</label>
-      <input class="event__input  event__input--destination" id="event-destination-${destination.id}" type="text" name="event-destination" value="${destination ? destination.name : ''}" list="destination-list-${listId}">
+      <label class="event__label  event__type-output" for="event-destination-${labelId}">${type}</label>
+      <input class="event__input  event__input--destination" id="event-destination-${labelId}" type="text" name="event-destination" value="${destination ? destination.name : ''}" list="destination-list-${listId}">
       <datalist id="destination-list-${listId}">
           ${optionString}
       </datalist>
@@ -75,7 +75,7 @@ const createDestinationPickerTemplate = (type, destination, destinations = []) =
 
 const createPicturesTemplate = (pictures = []) => pictures.map(({ src, description }) => `<img class="event__photo" src="${src}" alt="${description}">`).join('');
 
-const createDestinationsTemplate = ({ id, description, pictures }) => {
+const createDestinationsTemplate = ({ id, description, pictures } = {}) => {
   const isRenderNeed = id && (pictures.length || description);
   if (!isRenderNeed) {
     return '';
@@ -220,7 +220,6 @@ export default class FormView extends AbstractStatefulView {
   }
 
   _restoreHandlers = () => {
-    this.createEventListener(this.element.firstElementChild, 'keydown', this.#formEnterKeyHandler);
     this.createEventListener(this.element.firstElementChild, 'submit', this.#formSubmitHandler, { isPreventDefault: true });
     this.createEventListener(this.element.firstElementChild, 'reset', this.#formResetHandler, { isPreventDefault: true });
     this.createEventListener(this.element.firstElementChild, 'click', this.#offerClickHandler);
@@ -330,12 +329,6 @@ export default class FormView extends AbstractStatefulView {
     this._setState({ offerIds: [...offersIds] });
   };
 
-  #formEnterKeyHandler = (evt) => {
-    if ((evt.target !== this.#saveButton) && (evt.key === KeyCode.ENTER)) {
-      evt.preventDefault();
-    }
-  };
-
   #formSubmitHandler = () => {
     this.updateElement({ isSaving: true, isDisabled: true });
     this.#onFormSubmitCallback?.(this.#parseStateToEvent(this._state));
@@ -362,13 +355,13 @@ export default class FormView extends AbstractStatefulView {
     this.#saveButton = this.element.querySelector('.event__save-btn');
   };
 
-  #datePickerFromCloseHandler = ([date]) => {
+  #datePickerFromCloseHandler = ([date = this._state.dateTo]) => {
     const dateFrom = new Date(date).toISOString();
     this.#datePickerTo.set('minDate', dateFrom);
     this._setState({ dateFrom });
   };
 
-  #datePickerToCloseHandler = ([date]) => {
+  #datePickerToCloseHandler = ([date = this._state.dateFrom]) => {
     const dateTo = new Date(date).toISOString();
     this.#datePickerFrom.set('maxDate', dateTo);
     this._setState({ dateTo });
@@ -378,7 +371,6 @@ export default class FormView extends AbstractStatefulView {
     const [inputFrom, inputTo] = this.element.querySelectorAll('.event__input--time');
     const config = {
       allowInput: false,
-      allowInvalidPreload: false,
       enableTime: true,
       dateFormat: DateFormat.FORM_INPUT,
       minuteIncrement: 1,
@@ -411,6 +403,10 @@ export default class FormView extends AbstractStatefulView {
 
     this.#datePickerTo.config.onClose.push(this.#datePickerCloseHandler);
     this.#datePickerFrom.config.onClose.push(this.#datePickerCloseHandler);
+    if (this.#mode === FormMode.CREATE) {
+      this.#datePickerTo.input.value = '';
+      this.#datePickerFrom.input.value = '';
+    }
   };
 
   #parseEventToState = (event) => ({

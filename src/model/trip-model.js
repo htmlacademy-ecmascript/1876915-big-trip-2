@@ -1,8 +1,8 @@
+import dayjs from 'dayjs';
 import Observable from '../framework/observable';
 import { createFilters } from '../utils/filter';
 import { createSortItems } from '../utils/sort';
 import { EventListMessage, FilterType, tripDefault, UpdateType } from '../const';
-import dayjs from 'dayjs';
 
 export default class TripModel extends Observable {
   #eventApiService = null;
@@ -62,19 +62,22 @@ export default class TripModel extends Observable {
       ...tripDefault,
       dateFrom: date.toISOString(),
       dateTo: date.add(1, 'day').toISOString(),
-      destinationId: this.#destinations.values().next().value.id,
       type,
     };
   };
 
   async init() {
     try {
-      const [rawEvents, rawOffers, rawDestinations] = await this.#eventApiService.getTripData();
+      const [rawEvents = [], rawOffers = [], rawDestinations = []] = await this.#eventApiService.getTripData();
+
+      if ((rawOffers.length === 0) || (rawDestinations.length === 0)) {
+        throw new Error('Empty offers/destination list');
+      }
 
       this.#events = new Map(rawEvents.map(this.#adaptEventToClient));
       this.#offers = new Map(rawOffers.map(this.#adaptOffersToClient));
       this.#destinations = new Map(rawDestinations.map(this.#adaptDestinationsToClient));
-    } catch {
+    } catch (error) {
       this.#error = EventListMessage.ERROR;
     } finally {
       this._notify(UpdateType.MAJOR);

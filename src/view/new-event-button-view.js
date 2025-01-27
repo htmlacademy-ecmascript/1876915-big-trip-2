@@ -1,5 +1,5 @@
-import { ButtonText } from '../const';
 import AbstractView from '../framework/view/abstract-view';
+import { ButtonText } from '../const';
 
 const createButtonTemplate = () => (`
   <button class="trip-main__event-add-btn  btn  btn--big  btn--yellow" type="button" disabled>

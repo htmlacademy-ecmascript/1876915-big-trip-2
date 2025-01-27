@@ -1,3 +1,12 @@
+export const ButtonText = {
+  CANCEL: 'Cancel',
+  CREATE: 'New Event',
+  SAVE: 'Save',
+  SAVING: 'Saving...',
+  DELETE: 'Delete',
+  DELETING: 'Deleting...',
+};
+
 export const DateFormat = {
   EVENT_DEFAULT: 'YYYY-MM-DD',
   EVENT_HUMAN: 'MMM DD',
@@ -7,6 +16,11 @@ export const DateFormat = {
   INFO_HUMAN: 'DD MMM',
   INFO_SHORT_HUMAN: 'DD',
   FORM_INPUT: 'd/m/y H:i',
+};
+
+export const ElementSelectors = {
+  ROLL_UP_BUTTON: '.event__rollup-btn',
+  EVENT_ITEM: '.trip-events__item',
 };
 
 export const EventMode = {
@@ -28,11 +42,23 @@ export const FilterType = {
 
 export const EventListMessage = {
   [FilterType.EVERYTHING]: 'Click New Event to create your first point',
-  [FilterType.PAST]: 'There are no past events now',
-  [FilterType.PRESENT]: 'There are no present events now',
   [FilterType.FUTURE]: 'There are no future events now',
+  [FilterType.PRESENT]: 'There are no present events now',
+  [FilterType.PAST]: 'There are no past events now',
   LOADING: 'Loading...',
-  ERROR: 'The app is not available'
+  ERROR: 'Failed to load latest route information'
+};
+
+export const KeyCode = {
+  ESC: 'Escape',
+  ENTER: 'Enter',
+};
+
+export const Method = {
+  GET: 'GET',
+  PUT: 'PUT',
+  POST: 'POST',
+  DELETE: 'DELETE',
 };
 
 export const SortType = {
@@ -43,35 +69,22 @@ export const SortType = {
   OFFER: 'offers',
 };
 
-export const KeyCode = {
-  ESC: 'Escape',
-  ENTER: 'Enter',
-};
-
 export const tripDefault = {
   basePrice: 0,
+  destinationId: '',
   isFavorite: false,
   offerIds: [],
   type: 'flight',
 };
 
-export const ElementSelectors = {
-  ROLL_UP_BUTTON: '.event__rollup-btn',
-  EVENT_ITEM: '.trip-events__item',
-};
-
-export const ButtonText = {
-  CANCEL: 'Cancel',
-  CREATE: 'New Event',
-  SAVE: 'Save',
-  SAVING: 'Saving...',
-  DELETE: 'Delete',
-  DELETING: 'Deleting...',
-};
-
 export const TripTitleQuantity = {
   MIN: 1,
   MAX: 3,
+};
+
+export const UiBlockerTimeLimit = {
+  LOWER_LIMIT: 350,
+  UPPER_LIMIT: 1000,
 };
 
 export const UserAction = {
@@ -84,16 +97,4 @@ export const UpdateType = {
   PATCH: 'PATCH',
   MINOR: 'MINOR',
   MAJOR: 'MAJOR',
-};
-
-export const Method = {
-  GET: 'GET',
-  PUT: 'PUT',
-  POST: 'POST',
-  DELETE: 'DELETE',
-};
-
-export const UiBlockerTimeLimit = {
-  LOWER_LIMIT: 350,
-  UPPER_LIMIT: 1000,
 };
