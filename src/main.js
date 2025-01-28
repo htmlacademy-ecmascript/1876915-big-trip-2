@@ -6,7 +6,7 @@ import { EventApi } from './const';
 
 const tripInfoContainer = document.querySelector('.trip-main');
 const filtersContainer = tripInfoContainer.querySelector('.trip-controls__filters');
-const contentContainer = document.querySelector('.trip-events');
+const boardContainer = document.querySelector('.trip-events');
 
 const model = new TripModel(new EventApiService(EventApi.END_POINT, EventApi.AUTHORIZATION));
 model.init();
@@ -14,6 +14,6 @@ model.init();
 const header = new HeaderPresenter(tripInfoContainer, filtersContainer, model);
 header.init();
 
-const board = new BoardPresenter(contentContainer, tripInfoContainer, model);
+const board = new BoardPresenter(tripInfoContainer, boardContainer, model);
 board.init();
 
