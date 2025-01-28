@@ -13,13 +13,9 @@ const createTripTitle = (events, lastEvent, length, destinations) => {
 const createTripDate = (events, lastEvent, length) => {
   const firstEventMonth = new Date(events[0].dateFrom).getMonth();
   const lastEventMonth = new Date(lastEvent.dateFrom).getMonth();
+
   const format = ((length > TripTitleQuantity.MIN) && (firstEventMonth === lastEventMonth)) ? DateFormat.INFO_SHORT_HUMAN : DateFormat.INFO_HUMAN;
-
-  let date = `${dayjs(events[0].dateFrom).format(format)}`;
-
-  if (length > TripTitleQuantity.MIN) {
-    date += `&nbsp;&mdash;&nbsp;${dayjs(lastEvent.dateFrom).format(DateFormat.INFO_HUMAN)}`;
-  }
+  const date = `${dayjs(events[0].dateFrom).format(format)}&nbsp;&mdash;&nbsp;${dayjs(lastEvent.dateTo).format(DateFormat.INFO_HUMAN)}`;
 
   return date;
 };

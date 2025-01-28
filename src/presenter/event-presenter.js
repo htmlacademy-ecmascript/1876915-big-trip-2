@@ -1,7 +1,7 @@
+import FormView from '../view/form-view';
+import EventView from '../view/event-view';
 import { EventMode, FormMode, UpdateType, UserAction } from '../const';
 import { remove, render, RenderPosition, replace } from '../framework/render';
-import EventView from '../view/event-view';
-import FormView from '../view/form-view';
 
 export default class EventPresenter {
   #eventContainer = null;
@@ -44,18 +44,19 @@ export default class EventPresenter {
         .setOnFormSubmitHandler(this.#formSubmitHandler)
         .setOnFormDeleteHandler(this.#formDeleteHandler);
 
-      const component = (this.#formMode === FormMode.CREATE) ? this.#formComponent : this.#eventComponent;
       const position = (this.#formMode === FormMode.CREATE) ? RenderPosition.AFTERBEGIN : RenderPosition.BEFOREEND;
 
-      render(this.#eventContainer, component, position);
+      render(this.#eventContainer, this.#eventComponent, position);
       return this;
     }
+
+
     if (this.#eventMode === EventMode.DEFAULT) {
       this.#eventComponent.updateElement(this.#event);
-    } else {
-      this.#formComponent.updateElement(this.#event);
+      return this;
     }
 
+    this.#formComponent.updateElement(this.#event);
     return this;
   }
 
@@ -79,14 +80,23 @@ export default class EventPresenter {
   };
 
   toggleEventView = (direction = EventMode.DEFAULT) => {
-    if (direction === EventMode.DEFAULT) {
-      this.#formComponent.reset(this.#event);
-      this.#eventMode = EventMode.DEFAULT;
-      replace(this.#formComponent, this.#eventComponent);
-    } else {
-      this.#eventMode = EventMode.FORM;
-      replace(this.#eventComponent, this.#formComponent);
+
+    switch (direction) {
+      case (EventMode.FORM):
+        replace(this.#eventComponent, this.#formComponent);
+        break;
+
+      case (EventMode.DEFAULT):
+        if (this.#formMode === FormMode.CREATE) {
+          this.#formDeleteHandler(this.#event);
+        } else {
+          this.#formComponent.reset(this.#event);
+          replace(this.#formComponent, this.#eventComponent);
+        }
+        break;
     }
+
+    this.#eventMode = direction;
 
     return this;
   };

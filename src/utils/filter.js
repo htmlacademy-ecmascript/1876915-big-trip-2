@@ -9,9 +9,9 @@ const isEventPresent = (event) => {
 
 const filter = {
   [FilterType.EVERYTHING]: (events) => events,
-  [FilterType.PAST]: (events) => events.filter(isEventExpired),
-  [FilterType.PRESENT]: (events) => events.filter(isEventPresent),
   [FilterType.FUTURE]: (events) => events.filter(isEventFuture),
+  [FilterType.PRESENT]: (events) => events.filter(isEventPresent),
+  [FilterType.PAST]: (events) => events.filter(isEventExpired),
 };
 
 export const filterEvents = (events, filterType) => (filter[filterType])(events);
