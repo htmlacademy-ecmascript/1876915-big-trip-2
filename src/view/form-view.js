@@ -269,7 +269,7 @@ export default class FormView extends AbstractStatefulView {
   };
 
   #timePickerKeyDownHandler = (evt) => {
-    if (evt.key === KeyCode.DELETE) {
+    if ((evt.key === KeyCode.DELETE || (evt.key === KeyCode.BACKSPACE))) {
       evt.stopImmediatePropagation();
     }
   };

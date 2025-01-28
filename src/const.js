@@ -60,6 +60,7 @@ export const KeyCode = {
   ESC: 'Escape',
   ENTER: 'Enter',
   DELETE: 'Delete',
+  BACKSPACE: 'Backspace',
 };
 
 export const Method = {
