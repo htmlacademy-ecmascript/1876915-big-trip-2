@@ -36,7 +36,7 @@ export default class BoardPresenter {
     upperLimit: UiBlockerTimeLimit.UPPER_LIMIT
   });
 
-  constructor(boardContainer, newEventButtonContainer, tripModel) {
+  constructor(newEventButtonContainer, boardContainer, tripModel) {
     this.#boardContainer = boardContainer;
     this.#newEventButtonContainer = newEventButtonContainer;
     this.#tripModel = tripModel;
