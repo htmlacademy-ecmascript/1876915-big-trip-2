@@ -1,3 +1,10 @@
+export const EVENT_MAX_PICE = 100000;
+
+export const EventApi = {
+  AUTHORIZATION: 'Basic jESk1yTUPy1e3ElM4kxi0',
+  END_POINT: 'https://22.objects.htmlacademy.pro/big-trip',
+};
+
 export const ButtonText = {
   CANCEL: 'Cancel',
   CREATE: 'New Event',
@@ -52,6 +59,7 @@ export const EventListMessage = {
 export const KeyCode = {
   ESC: 'Escape',
   ENTER: 'Enter',
+  DELETE: 'Delete',
 };
 
 export const Method = {

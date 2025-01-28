@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import Observable from '../framework/observable';
 import { createFilters } from '../utils/filter';
 import { createSortItems } from '../utils/sort';
@@ -55,13 +54,13 @@ export default class TripModel extends Observable {
   }
 
   getDefaultEvent = () => {
-    const date = dayjs();
+    const date = new Date().toISOString();
     const type = this.#offers.has(tripDefault.type) ? tripDefault.type : this.#offers.keys()[0];
 
     return {
       ...tripDefault,
-      dateFrom: date.toISOString(),
-      dateTo: date.add(1, 'day').toISOString(),
+      dateFrom: date,
+      dateTo: date,
       type,
     };
   };

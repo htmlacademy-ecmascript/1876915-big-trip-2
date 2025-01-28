@@ -1,17 +1,14 @@
-import { nanoid } from 'nanoid';
 import EventApiService from './event-api-service';
 import TripModel from './model/trip-model';
 import BoardPresenter from './presenter/board-presenter';
 import HeaderPresenter from './presenter/header-presenter';
-
-const AUTHORIZATION = `Basic ${nanoid()}`;
-const END_POINT = 'https://22.objects.htmlacademy.pro/big-trip';
+import { EventApi } from './const';
 
 const tripInfoContainer = document.querySelector('.trip-main');
 const filtersContainer = tripInfoContainer.querySelector('.trip-controls__filters');
 const contentContainer = document.querySelector('.trip-events');
 
-const model = new TripModel(new EventApiService(END_POINT, AUTHORIZATION));
+const model = new TripModel(new EventApiService(EventApi.END_POINT, EventApi.AUTHORIZATION));
 model.init();
 
 const header = new HeaderPresenter(tripInfoContainer, filtersContainer, model);
