@@ -16,4 +16,4 @@ export const getDuration = (timeStart, timeEnd) => {
   return [start, end, `${hours ? `${hours}H`.padStart(3, '0') : ''} ${minutesString}`];
 };
 
-export const capitalizeFirstLetter = (string) => string?.replace(/^./i, (char) => char.toUpperCase());
+export const capitalizeFirstLetter = (line) => line?.replace(/^./i, (char) => char.toUpperCase());

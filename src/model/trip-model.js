@@ -53,17 +53,10 @@ export default class TripModel extends Observable {
     return this.#error;
   }
 
-  getDefaultEvent = () => {
-    const date = new Date().toISOString();
-    const type = this.#offers.has(tripDefault.type) ? tripDefault.type : this.#offers.keys()[0];
-
-    return {
-      ...tripDefault,
-      dateFrom: date,
-      dateTo: date,
-      type,
-    };
-  };
+  getDefaultEvent = () => ({
+    ...tripDefault,
+    type: this.#offers.has(tripDefault.type) ? tripDefault.type : this.#offers.keys()[0],
+  });
 
   async init() {
     try {

@@ -154,7 +154,6 @@ export default class BoardPresenter {
   };
 
   #destroyEventPresenters = () => {
-    this.#newEventButtonComponent.enable();
     this.#eventPresenters.forEach((presenter) => presenter.destroy());
     this.#eventPresenters.clear();
     this.#activeEventId = '';
@@ -173,6 +172,7 @@ export default class BoardPresenter {
       return;
     }
 
+    this.#newEventButtonComponent.enable();
     this.#updateEventList();
   };
 

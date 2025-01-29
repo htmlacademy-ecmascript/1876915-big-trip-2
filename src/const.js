@@ -80,6 +80,8 @@ export const SortType = {
 
 export const tripDefault = {
   basePrice: 0,
+  dateFrom: '',
+  dateTo: '',
   destinationId: '',
   isFavorite: false,
   offerIds: [],
