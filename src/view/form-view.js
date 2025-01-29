@@ -211,9 +211,8 @@ export default class FormView extends AbstractStatefulView {
     this.#offers = offers;
     this.#destinations = destinations;
     this.#mode = mode;
-    this._setState(this.#parseEventToState({ ...event, isFirstLoad: true, }));
+    this._setState(this.#parseEventToState(event));
     this._restoreHandlers();
-    this._setState({ isFirstLoad: false });
   }
 
   get template() {
@@ -367,25 +366,29 @@ export default class FormView extends AbstractStatefulView {
     this.#saveButton = this.element.querySelector('.event__save-btn');
   };
 
-  #datePickerFromCloseHandler = ([date = this._state.dateTo]) => {
-    date = new Date(date).toISOString();
-    this.#datePickerTo.set('minDate', date);
-    this._setState({ dateFrom: date });
+  #datePickerFromCloseHandler = ([date]) => {
+    if (date) {
+      date = new Date(date).toISOString();
+      this.#datePickerTo.set('minDate', date);
+      this._setState({ dateFrom: date });
 
-    if (!this.#datePickerTo.input.value) {
-      this.#datePickerTo.setDate(date);
-      this.#datePickerToCloseHandler([date]);
+      if (!this.#datePickerTo.input.value) {
+        this.#datePickerTo.setDate(date);
+        this.#datePickerToCloseHandler([date]);
+      }
     }
   };
 
-  #datePickerToCloseHandler = ([date = this._state.dateFrom]) => {
-    date = new Date(date).toISOString();
-    this._setState({ dateTo: date });
-    this.#datePickerFrom.set('maxDate', date);
+  #datePickerToCloseHandler = ([date]) => {
+    if (date) {
+      date = new Date(date).toISOString();
+      this._setState({ dateTo: date });
+      this.#datePickerFrom.set('maxDate', date);
 
-    if (!this.#datePickerFrom.input.value) {
-      this.#datePickerFrom.setDate(date);
-      this.#datePickerFromCloseHandler(date);
+      if (!this.#datePickerFrom.input.value) {
+        this.#datePickerFrom.setDate(date);
+        this.#datePickerFromCloseHandler(date);
+      }
     }
   };
 
@@ -410,7 +413,7 @@ export default class FormView extends AbstractStatefulView {
       inputFrom,
       {
         ...this.#getDatePickerConfig(),
-        defaultDate: this._state.dateFrom,
+        defaultDate: this._state.dateFrom || new Date(),
         maxDate: this._state.dateTo,
         onClose: [this.#datePickerFromCloseHandler, this.#datePickerCloseHandler],
       },
@@ -420,15 +423,20 @@ export default class FormView extends AbstractStatefulView {
       inputTo,
       {
         ...this.#getDatePickerConfig(),
-        defaultDate: this._state.dateTo,
+        defaultDate: this._state.dateTo || new Date(),
         minDate: this._state.dateFrom,
         onClose: [this.#datePickerToCloseHandler, this.#datePickerCloseHandler],
       },
     );
 
-    if (this._state.isFirstLoad && (this.#mode === FormMode.CREATE)) {
-      this.#datePickerTo.clear();
-      this.#datePickerFrom.clear();
+    if ((this.#mode === FormMode.CREATE)) {
+      if (!this._state.dateFrom) {
+        this.#datePickerFrom.clear();
+      }
+
+      if (!this._state.dateTo) {
+        this.#datePickerTo.clear();
+      }
     }
   };
 
@@ -443,7 +451,6 @@ export default class FormView extends AbstractStatefulView {
     delete state.isSaving;
     delete state.isDeleting;
     delete state.isDisabled;
-    delete state.isFirstLoad;
 
     return state;
   };

@@ -1,10 +1,10 @@
 import { SortType } from '../const';
 
-const sortByDate = (a, b) => new Date(a.dateFrom) - new Date(b.dateFrom);
-const sortByPrice = (a, b) => b.basePrice - a.basePrice;
-const sortByDuration = (a, b) => {
-  const durationA = Math.abs(new Date(a.dateFrom) - new Date(a.dateTo));
-  const durationB = Math.abs(new Date(b.dateFrom) - new Date(b.dateTo));
+const sortByDate = (first, second) => new Date(first.dateFrom) - new Date(second.dateFrom);
+const sortByPrice = (first, second) => second.basePrice - first.basePrice;
+const sortByDuration = (first, second) => {
+  const durationA = Math.abs(new Date(first.dateFrom) - new Date(first.dateTo));
+  const durationB = Math.abs(new Date(second.dateFrom) - new Date(second.dateTo));
   return durationB - durationA;
 };
 
